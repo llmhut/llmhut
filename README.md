@@ -17,6 +17,8 @@
 
 ## What is LLM Hut?
 
+<img src="./assets/banner-llmhut.png" />
+
 Building with LLMs today is fragmented. Teams share API keys over Slack. Nobody knows which SDKs or frameworks are running in the codebase. There's no standard way to swap providers, enforce budgets, or maintain an audit trail.
 
 LLM Hut is building the foundational infrastructure layer to fix this — modular, open-source tools that cover the full AI operations lifecycle from development to production. Each project works standalone or as part of a unified stack.
