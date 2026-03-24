@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>llmhut — Open AI Infrastructure</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent:  #f97316;
+      --accent2: #fb923c;
+      --green:   #4ade80;
+      --green2:  #22c55e;
+      --blue:    #60a5fa;
+      --purple:  #c084fc;
+      --red:     #f87171;
+      --yellow:  #fbbf24;
+      --cyan:    #22d3ee;
+      --font:    'Inter', system-ui, sans-serif;
+      --mono:    'JetBrains Mono', 'Fira Code', monospace;
+      --ease:    cubic-bezier(0.16,1,0.3,1);
+    }
+
+    [data-theme="dark"] {
+      --bg:      #0a0a0a;
+      --bg2:     #111;
+      --surface: #141414;
+      --s2:      #1c1c1c;
+      --s3:      #242424;
+      --b1:      rgba(255,255,255,0.06);
+      --b2:      rgba(255,255,255,0.1);
+      --b3:      rgba(255,255,255,0.16);
+      --text:    #e8e8e8;
+      --text2:   rgba(232,232,232,0.72);
+      --muted:   rgba(232,232,232,0.42);
+      --dim:     rgba(232,232,232,0.2);
+      --nav-bg:  rgba(10,10,10,0.82);
+      --card:    rgba(255,255,255,0.025);
+      --shine:   rgba(255,255,255,0.035);
+      --code-bg: #0d0d0d;
+      --grid:    rgba(255,255,255,0.025);
+      --lhl:     rgba(249,115,22,0.06);
+      --shadow:  0 0 0 1px rgba(255,255,255,0.04), 0 40px 100px rgba(0,0,0,0.7);
+    }
+
+    [data-theme="light"] {
+      --bg:      #f6f6f6;
+      --bg2:     #efefef;
+      --surface: #ffffff;
+      --s2:      #f3f3f3;
+      --s3:      #e8e8e8;
+      --b1:      rgba(0,0,0,0.07);
+      --b2:      rgba(0,0,0,0.11);
+      --b3:      rgba(0,0,0,0.17);
+      --text:    #111;
+      --text2:   rgba(17,17,17,0.72);
+      --muted:   rgba(17,17,17,0.44);
+      --dim:     rgba(17,17,17,0.24);
+      --nav-bg:  rgba(246,246,246,0.88);
+      --card:    rgba(0,0,0,0.018);
+      --shine:   rgba(255,255,255,0.7);
+      --code-bg: #1a1a1a;
+      --grid:    rgba(0,0,0,0.04);
+      --lhl:     rgba(249,115,22,0.08);
+      --shadow:  0 0 0 1px rgba(0,0,0,0.06), 0 20px 60px rgba(0,0,0,0.1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font); font-size: 15px;
+      line-height: 1.6; overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.35s var(--ease), color 0.35s var(--ease);
+    }
+
+    .grid-bg {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 100% 80% at 50% 0%, black 0%, transparent 70%);
+      -webkit-mask-image: radial-gradient(ellipse 100% 80% at 50% 0%, black 0%, transparent 70%);
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+      height: 54px; display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(16px,3vw,40px);
+      background: var(--nav-bg);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--b1);
+      animation: nav-in 0.6s var(--ease) both;
+      transition: background 0.35s, border-color 0.35s;
+    }
+    @keyframes nav-in { from{opacity:0;transform:translateY(-100%)} to{opacity:1;transform:translateY(0)} }
+
+    .nav-left { display:flex; align-items:center; gap:28px; }
+
+    .logo { display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--text); }
+    .logo-ico {
+      width:28px; height:28px; border-radius:7px;
+      background:linear-gradient(145deg,#f97316,#c2440c);
+      display:grid; place-items:center; position:relative; overflow:hidden;
+      box-shadow:0 2px 10px rgba(249,115,22,0.4); flex-shrink:0;
+    }
+    .logo-ico::after { content:''; position:absolute; inset:0; background:linear-gradient(160deg,rgba(255,255,255,0.25) 0%,transparent 50%); }
+    .logo-ico svg { position:relative; z-index:1; }
+    .logo-name { font-family:var(--mono); font-size:14px; font-weight:600; }
+    .logo-v { color:var(--muted); font-weight:400; }
+
+    .nav-pills { display:flex; border:1px solid var(--b2); border-radius:8px; overflow:hidden; }
+    .nav-pill {
+      padding:5px 14px; font-size:12.5px; font-weight:500;
+      color:var(--muted); text-decoration:none;
+      border-right:1px solid var(--b1); transition:all 0.2s;
+    }
+    .nav-pill:last-child{border-right:none;}
+    .nav-pill:hover{color:var(--text);background:var(--card);}
+
+    .nav-right { display:flex; align-items:center; gap:8px; }
+
+    .theme-btn {
+      width:34px; height:34px; border-radius:7px; border:1px solid var(--b2);
+      background:var(--card); cursor:pointer; display:grid; place-items:center;
+      color:var(--muted); transition:all 0.2s;
+    }
+    .theme-btn:hover{color:var(--text);background:var(--s3);}
+    .theme-btn svg{width:14px;height:14px;}
+    .i-sun{display:none;} .i-moon{display:block;}
+    [data-theme="light"] .i-sun{display:block;} [data-theme="light"] .i-moon{display:none;}
+
+    .gh-btn {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 14px; border-radius:7px;
+      background:var(--s2); border:1px solid var(--b2);
+      font-size:12.5px; font-weight:600; color:var(--text);
+      text-decoration:none; font-family:var(--mono); transition:all 0.2s;
+    }
+    .gh-btn:hover{background:var(--s3);border-color:var(--b3);}
+    .gh-count { font-size:10px; color:var(--muted); background:var(--b1); padding:1px 6px; border-radius:4px; }
+
+    /* HERO */
+    .hero {
+      position:relative; z-index:2; min-height:100vh;
+      display:flex; align-items:center;
+      padding:100px clamp(20px,4vw,52px) 80px;
+      max-width:1280px; margin:0 auto; gap:64px;
+    }
+    .hero-l { flex:1; min-width:0; display:flex; flex-direction:column; gap:26px; }
+    .hero-r {
+      flex:1.1; min-width:0; display:flex; flex-direction:column; gap:10px;
+      opacity:0; animation:fade-up 1s 0.4s var(--ease) forwards;
+    }
+    @keyframes fade-up { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+
+    .h-eyebrow {
+      display:inline-flex; align-items:center; gap:8px;
+      font-family:var(--mono); font-size:11px; color:var(--muted);
+      letter-spacing:0.04em; width:fit-content;
+      opacity:0; animation:fade-up 0.7s 0.1s var(--ease) forwards;
+    }
+    .h-bars { display:flex; gap:3px; align-items:flex-end; }
+    .h-bars span { display:block; width:3px; border-radius:2px; }
+
+    h1 {
+      font-size:clamp(2.3rem,4.5vw,4rem);
+      font-weight:700; letter-spacing:-0.04em;
+      line-height:1.06; color:var(--text);
+      opacity:0; animation:fade-up 0.9s 0.2s var(--ease) forwards;
+    }
+    .h-accent { color:var(--accent); }
+
+    .h-sub {
+      font-size:0.97rem; color:var(--muted); line-height:1.75;
+      max-width:480px; letter-spacing:-0.01em;
+      opacity:0; animation:fade-up 0.8s 0.32s var(--ease) forwards;
+    }
+
+    /* install commands */
+    .installs {
+      display:flex; gap:8px; flex-wrap:wrap;
+      opacity:0; animation:fade-up 0.8s 0.44s var(--ease) forwards;
+    }
+    .icmd {
+      display:flex; align-items:center; gap:9px;
+      background:var(--code-bg); border:1px solid var(--b2);
+      border-radius:8px; padding:9px 14px;
+      font-family:var(--mono); font-size:12.5px;
+      color:var(--text2); cursor:pointer; transition:border-color 0.2s;
+    }
+    .icmd:hover{border-color:var(--b3);}
+    .icmd .pm{color:var(--muted);}
+    .icmd .pkg{color:var(--green);}
+    .icmd .arg{color:var(--muted);}
+    .cpybtn {
+      padding:2px 7px; background:var(--s3); border-radius:4px;
+      font-size:10px; color:var(--muted); border:1px solid var(--b1);
+      cursor:pointer; transition:all 0.15s; margin-left:2px;
+    }
+    .cpybtn:hover{color:var(--text);}
+    .icmd.copied .cpybtn{color:var(--green);border-color:rgba(74,222,128,0.3);}
+
+    .h-ctas {
+      display:flex; gap:10px; flex-wrap:wrap;
+      opacity:0; animation:fade-up 0.8s 0.54s var(--ease) forwards;
+    }
+
+    .btn-p {
+      display:inline-flex; align-items:center; gap:7px;
+      padding:10px 20px; border-radius:8px;
+      background:var(--text); color:var(--bg);
+      font-size:13.5px; font-weight:600;
+      text-decoration:none; transition:all 0.25s var(--ease);
+      position:relative; overflow:hidden;
+    }
+    .btn-p::before{content:'';position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,255,255,0.15),transparent);}
+    .btn-p:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(249,115,22,0.2);}
+
+    .btn-g {
+      display:inline-flex; align-items:center; gap:7px;
+      padding:10px 20px; border-radius:8px;
+      border:1px solid var(--b2); background:var(--card);
+      color:var(--text2); font-size:13.5px; font-weight:500;
+      text-decoration:none; transition:all 0.2s;
+    }
+    .btn-g:hover{background:var(--s2);border-color:var(--b3);}
+
+    .h-stats {
+      display:flex; gap:24px; align-items:center;
+      opacity:0; animation:fade-up 0.8s 0.64s var(--ease) forwards;
+    }
+    .hst { display:flex; flex-direction:column; gap:2px; }
+    .hst-v { font-family:var(--mono); font-size:18px; font-weight:700; letter-spacing:-0.03em; }
+    .hst-l { font-size:10px; color:var(--muted); letter-spacing:0.05em; text-transform:uppercase; font-weight:600; }
+    .hst-sep { width:1px; background:var(--b2); height:36px; flex-shrink:0; }
+
+    /* code window */
+    .cw {
+      background:var(--code-bg); border:1px solid var(--b2);
+      border-radius:12px; overflow:hidden; box-shadow:var(--shadow);
+      transition:border-color 0.35s;
+    }
+    .cw-bar {
+      display:flex; align-items:center; gap:8px;
+      padding:10px 14px;
+      background:rgba(255,255,255,0.03);
+      border-bottom:1px solid var(--b1);
+    }
+    [data-theme="light"] .cw-bar{background:rgba(0,0,0,0.04);}
+    .wdots{display:flex;gap:5px;}
+    .wd{width:11px;height:11px;border-radius:50%;}
+    .wd-r{background:#ff5f57} .wd-y{background:#febc2e} .wd-g{background:#28c840}
+
+    .cw-tabs{display:flex;gap:0;margin-left:8px;flex:1;}
+    .cwt {
+      padding:3px 12px; font-family:var(--mono); font-size:11px;
+      color:var(--muted); border-radius:5px 5px 0 0;
+      cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:5px;
+    }
+    .cwt.on{background:var(--s2);color:var(--text2);}
+    [data-theme="light"] .cwt.on{background:rgba(0,0,0,0.06);}
+    .cwt-dot{width:5px;height:5px;border-radius:50%;}
+
+    .cw-copy {
+      margin-left:auto; padding:2px 9px;
+      font-family:var(--mono); font-size:10px;
+      border-radius:5px; border:1px solid var(--b1);
+      color:var(--muted); background:transparent;
+      cursor:pointer; transition:all 0.15s;
+    }
+    .cw-copy:hover{color:var(--text2);background:var(--s3);}
+
+    .tab-c{display:none;} .tab-c.on{display:block;}
+
+    /* code lines */
+    .cb { font-family:var(--mono); font-size:12.5px; line-height:1.9; }
+    .cl { display:flex; padding:0 20px; transition:background 0.15s; min-height:22px; }
+    .cl:hover{background:rgba(255,255,255,0.025);}
+    [data-theme="light"] .cl:hover{background:rgba(0,0,0,0.025);}
+    .cl.hl{background:var(--lhl);}
+    .ln { display:inline-block; width:28px; color:rgba(255,255,255,0.12); text-align:right; margin-right:20px; user-select:none; font-size:11px; flex-shrink:0; }
+    [data-theme="light"] .ln{color:rgba(0,0,0,0.15);}
+
+    /* syntax */
+    .k{color:#c792ea} .s{color:#c3e88d} .n{color:#82aaff}
+    .o{color:#89ddff} .cmt{color:rgba(232,232,232,0.25)} .num{color:#f78c6c}
+    .fn{color:#82aaff} .t{color:#ffcb6b} .p{color:var(--text2)}
+    .cg{color:var(--green)} .cb2{color:var(--blue)} .co{color:var(--accent)}
+    .cr{color:var(--red)} .cm{color:var(--muted)}
+
+    /* terminal strip */
+    .tstrip {
+      background:var(--code-bg); border:1px solid var(--b2);
+      border-radius:10px; overflow:hidden; box-shadow:var(--shadow);
+      transition:border-color 0.35s;
+    }
+    .ts-bar {
+      display:flex; align-items:center; gap:8px; padding:8px 14px;
+      background:rgba(255,255,255,0.02); border-bottom:1px solid var(--b1);
+      font-family:var(--mono); font-size:11px; color:var(--dim);
+    }
+    [data-theme="light"] .ts-bar{background:rgba(0,0,0,0.03);}
+    .ts-body { padding:12px 20px; font-family:var(--mono); font-size:12px; line-height:2; }
+    .tl{display:block;} .tbl{display:block;height:8px;}
+
+    /* SECTIONS */
+    .sec{position:relative;z-index:2;padding:92px 0;}
+    .wrap{max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,52px);}
+    .divider{height:1px;background:var(--b1);}
+
+    .etag {
+      display:inline-flex; align-items:center; gap:7px;
+      font-family:var(--mono); font-size:11px; font-weight:600;
+      color:var(--accent); letter-spacing:0.06em;
+      text-transform:uppercase; margin-bottom:14px;
+    }
+    .etag::before{content:'';display:block;width:16px;height:2px;background:var(--accent);border-radius:2px;}
+
+    .stitle{font-size:clamp(1.9rem,3vw,2.7rem);font-weight:700;letter-spacing:-0.04em;line-height:1.08;margin-bottom:14px;}
+    .sdesc{font-size:0.95rem;color:var(--muted);line-height:1.75;letter-spacing:-0.01em;}
+
+    /* reveal */
+    .r{opacity:0;transform:translateY(34px);transition:opacity 0.8s var(--ease),transform 0.8s var(--ease);}
+    .r.in{opacity:1;transform:translateY(0);}
+    .d1{transition-delay:.08s} .d2{transition-delay:.16s} .d3{transition-delay:.24s} .d4{transition-delay:.32s}
+
+    /* PROJECTS */
+    .pgrid{display:grid;gap:1px;background:var(--b2);border:1px solid var(--b2);border-radius:14px;overflow:hidden;}
+
+    .pcard{background:var(--surface);display:grid;grid-template-columns:1fr 1.15fr;transition:background 0.2s;}
+    .pcard:hover{background:var(--s2);}
+    .pcard.rv{direction:rtl;}
+    .pcard.rv>*{direction:ltr;}
+
+    .pc-info{padding:40px 36px;display:flex;flex-direction:column;gap:15px;border-right:1px solid var(--b1);}
+    .pcard.rv .pc-info{border-right:none;border-left:1px solid var(--b1);}
+
+    .pc-top{display:flex;align-items:center;gap:10px;}
+    .ptag{font-family:var(--mono);font-size:10px;font-weight:600;padding:3px 10px;border-radius:5px;letter-spacing:0.04em;}
+    .tor{background:rgba(249,115,22,0.1);color:var(--accent);border:1px solid rgba(249,115,22,0.2);}
+    .tgr{background:rgba(74,222,128,0.08);color:var(--green);border:1px solid rgba(74,222,128,0.2);}
+    .tbl3{background:rgba(96,165,250,0.08);color:var(--blue);border:1px solid rgba(96,165,250,0.2);}
+
+    .pstars{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10px;color:var(--muted);}
+    .pstars svg{width:11px;height:11px;color:var(--yellow);}
+
+    .pname{font-family:var(--mono);font-size:20px;font-weight:700;letter-spacing:-0.02em;}
+    .pdesc{font-size:13.5px;color:var(--muted);line-height:1.7;}
+
+    .pmeta{display:flex;gap:18px;flex-wrap:wrap;align-items:center;}
+    .pst{display:flex;flex-direction:column;gap:3px;}
+    .psv{font-family:var(--mono);font-size:18px;font-weight:700;letter-spacing:-0.03em;}
+    .psl{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:0.07em;font-weight:600;}
+    .pssep{width:1px;background:var(--b2);height:32px;}
+
+    .plink{
+      display:inline-flex;align-items:center;gap:6px;
+      font-family:var(--mono);font-size:12px;font-weight:600;
+      text-decoration:none;padding:8px 16px;border-radius:7px;
+      border:1px solid var(--b2);background:var(--card);width:fit-content;
+      transition:all 0.2s;
+    }
+    .plink:hover{transform:translateX(3px);background:var(--s3);}
+    .plink svg{transition:transform 0.2s;}
+    .plink:hover svg{transform:translateX(2px);}
+    .lor{color:var(--accent)} .lgr{color:var(--green)} .lbl{color:var(--blue)}
+
+    .pc-code{display:flex;flex-direction:column;overflow:hidden;}
+    .pc-code-bar{
+      display:flex;align-items:center;gap:8px;padding:10px 16px;
+      background:rgba(255,255,255,0.02);border-bottom:1px solid var(--b1);flex-shrink:0;
+    }
+    [data-theme="light"] .pc-code-bar{background:rgba(0,0,0,0.03);}
+    .pc-code-body{font-family:var(--mono);font-size:12px;line-height:1.85;flex:1;overflow:auto;background:var(--code-bg);}
+
+    /* QUICKSTART */
+    .qs-wrap{display:grid;grid-template-columns:1fr 1.4fr;gap:72px;align-items:start;}
+    .qs-steps{display:flex;flex-direction:column;gap:0;}
+    .qsstep{display:flex;gap:16px;padding:18px 0;border-bottom:1px solid var(--b1);}
+    .qsstep:last-child{border-bottom:none;}
+    .qsnum{
+      width:28px;height:28px;border-radius:7px;
+      background:var(--s3);border:1px solid var(--b2);
+      display:grid;place-items:center;flex-shrink:0;
+      font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);
+    }
+    .qsstep.done .qsnum{background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.25);color:var(--green);}
+    .qst{font-size:14px;font-weight:600;letter-spacing:-0.02em;margin-bottom:4px;}
+    .qsd{font-size:12.5px;color:var(--muted);line-height:1.6;}
+
+    .ft{background:var(--code-bg);border:1px solid var(--b2);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);}
+    .ft-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(255,255,255,0.025);border-bottom:1px solid var(--b1);}
+    [data-theme="light"] .ft-bar{background:rgba(0,0,0,0.04);}
+    .ft-lbl{font-family:var(--mono);font-size:11px;color:var(--dim);margin-left:6px;}
+    .ft-body{padding:18px 20px;font-family:var(--mono);font-size:12.5px;line-height:1.95;}
+    .fl{display:block;} .fbl{display:block;height:10px;}
+
+    /* WHY */
+    .why-g{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--b2);border:1px solid var(--b2);border-radius:14px;overflow:hidden;}
+    .why-col{background:var(--surface);padding:36px 30px;}
+    .why-head{display:flex;align-items:center;gap:10px;margin-bottom:22px;}
+    .why-ico{width:32px;height:32px;border-radius:7px;display:grid;place-items:center;}
+    .why-ico svg{width:15px;height:15px;}
+    .why-title{font-size:14px;font-weight:700;letter-spacing:-0.02em;}
+    .why-sub{font-size:12px;color:var(--muted);}
+    .why-items{display:flex;flex-direction:column;gap:9px;}
+    .wi{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:8px;border:1px solid var(--b1);background:var(--card);transition:background 0.2s;}
+    .wi:hover{background:var(--s3);}
+    .wi-ico{flex-shrink:0;margin-top:1px;}
+    .wi-ico svg{width:14px;height:14px;}
+    .wi-t{font-size:13px;color:var(--text2);letter-spacing:-0.01em;}
+    .wi-s{font-size:11.5px;color:var(--muted);margin-top:2px;}
+
+    /* ROADMAP */
+    .rmtbl{border:1px solid var(--b2);border-radius:12px;overflow:hidden;background:var(--surface);margin-top:48px;}
+    .rm-hr{display:grid;grid-template-columns:2fr 3fr 1fr;padding:10px 20px;background:var(--s2);border-bottom:1px solid var(--b1);font-family:var(--mono);font-size:10px;color:var(--dim);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;}
+    .rm-r{display:grid;grid-template-columns:2fr 3fr 1fr;padding:14px 20px;border-bottom:1px solid var(--b1);align-items:center;transition:background 0.2s;font-size:13px;}
+    .rm-r:last-child{border-bottom:none;}
+    .rm-r:hover{background:var(--s2);}
+    .rm-n{font-weight:600;color:var(--text2);letter-spacing:-0.01em;font-family:var(--mono);}
+    .rm-d{color:var(--muted);font-size:12px;}
+    .rmbadge{font-family:var(--mono);font-size:10px;padding:3px 10px;border-radius:5px;font-weight:600;width:fit-content;}
+    .rb-s{background:rgba(192,132,252,0.1);color:var(--purple);border:1px solid rgba(192,132,252,0.2);}
+    .rb-p{background:var(--card);color:var(--muted);border:1px solid var(--b1);}
+
+    /* COMMUNITY */
+    .cc-g{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--b2);border:1px solid var(--b2);border-radius:14px;overflow:hidden;margin-top:48px;}
+    .cc-c{background:var(--surface);padding:30px 26px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:12px;transition:background 0.2s;}
+    .cc-c:hover{background:var(--s2);}
+    .cc-ico{width:38px;height:38px;border-radius:9px;background:var(--card);border:1px solid var(--b2);display:grid;place-items:center;}
+    .cc-ico svg{width:17px;height:17px;color:var(--text2);}
+    .cc-n{font-size:14.5px;font-weight:700;letter-spacing:-0.02em;}
+    .cc-d{font-size:13px;color:var(--muted);line-height:1.65;flex:1;}
+    .cc-l{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:600;}
+
+    /* CTA */
+    .cta-sec{padding:120px 0;text-align:center;position:relative;z-index:2;}
+    .cta-in{max-width:580px;margin:0 auto;}
+    .cta-in h2{font-size:clamp(2.1rem,4vw,3.3rem);font-weight:700;letter-spacing:-0.05em;line-height:1.06;margin-bottom:16px;}
+    .grad{background:linear-gradient(100deg,var(--accent) 0%,#f59e0b 50%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .cta-in p{color:var(--muted);font-size:0.95rem;margin-bottom:40px;line-height:1.75;}
+    .cta-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+
+    footer{border-top:1px solid var(--b1);padding:28px 0;position:relative;z-index:2;background:var(--bg);transition:background 0.35s,border-color 0.35s;}
+    .fi{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;}
+    .fl2{display:flex;align-items:center;gap:12px;}
+    .fc{font-family:var(--mono);font-size:11px;color:var(--dim);}
+    .flinks{display:flex;gap:20px;}
+    .flinks a{font-family:var(--mono);font-size:11px;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+    .flinks a:hover{color:var(--text);}
+
+    .count-up{display:inline-block;}
+
+    @media(max-width:1024px){
+      .hero{flex-direction:column;padding-top:80px;gap:40px;}
+      .hero-r{width:100%;}
+      .qs-wrap{grid-template-columns:1fr;}
+      .pcard{grid-template-columns:1fr;} .pcard.rv{direction:ltr;}
+      .pc-info{border-right:none;border-bottom:1px solid var(--b1);}
+      .pcard.rv .pc-info{border-left:none;border-bottom:1px solid var(--b1);}
+      .why-g{grid-template-columns:1fr;}
+      .cc-g{grid-template-columns:1fr 1fr;}
+      .nav-pills{display:none;}
+      .rm-d{display:none;} .rm-hr{grid-template-columns:1fr 1fr;} .rm-r{grid-template-columns:1fr 1fr;}
+    }
+    @media(max-width:640px){
+      h1{font-size:2.2rem;}
+      .cc-g{grid-template-columns:1fr;}
+      .h-stats{flex-wrap:wrap;gap:14px;}
+    }
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <a href="#" class="logo">
+      <div class="logo-ico">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      </div>
+      <span class="logo-name">llmhut<span class="logo-v"> v0.1</span></span>
+    </a>
+    <div class="nav-pills">
+      <a href="#projects" class="nav-pill">Projects</a>
+      <a href="#quickstart" class="nav-pill">Quickstart</a>
+      <a href="#why" class="nav-pill">Why</a>
+      <a href="#community" class="nav-pill">Community</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <button class="theme-btn" id="themeBtn">
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <a href="https://github.com/llmhut" target="_blank" class="gh-btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+      GitHub <span class="gh-count">★ 142</span>
+    </a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-l">
+    <div class="h-eyebrow">
+      <div class="h-bars">
+        <span style="height:14px;background:var(--accent)"></span>
+        <span style="height:10px;background:var(--muted)"></span>
+        <span style="height:7px;background:var(--dim)"></span>
+      </div>
+      Open Infrastructure · Built in India
+    </div>
+
+    <h1>The missing infra<br/>layer for <span class="h-accent">LLM apps.</span></h1>
+
+    <p class="h-sub">Discovery, access control, and runtime routing for LLM-native systems. Drop into any codebase — no rewrites, no lock-in, no shared keys.</p>
+
+    <div class="installs">
+      <div class="icmd" data-copy="npx ai-scanner ./src">
+        <span class="pm">npx</span><span class="pkg">ai-scanner</span><span class="arg">./src</span>
+        <span class="cpybtn">copy</span>
+      </div>
+      <div class="icmd" data-copy="docker run -p 8080:8080 ghcr.io/llmhut/gateway">
+        <span class="pm">docker</span><span class="pkg">run</span><span class="arg">llmhut/gateway</span>
+        <span class="cpybtn">copy</span>
+      </div>
+    </div>
+
+    <div class="h-ctas">
+      <a href="https://github.com/llmhut" target="_blank" class="btn-p">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        View on GitHub
+      </a>
+      <a href="#quickstart" class="btn-g">Quickstart →</a>
+      <a href="https://aakashbhardwaj27.github.io/keygate/" target="_blank" class="btn-g">Docs</a>
+    </div>
+
+    <div class="h-stats">
+      <div class="hst"><span class="hst-v">145</span><span class="hst-l">Patterns</span></div>
+      <div class="hst-sep"></div>
+      <div class="hst"><span class="hst-v">23</span><span class="hst-l">SDKs</span></div>
+      <div class="hst-sep"></div>
+      <div class="hst"><span class="hst-v">5</span><span class="hst-l">Providers</span></div>
+      <div class="hst-sep"></div>
+      <div class="hst"><span class="hst-v">&lt;1ms</span><span class="hst-l">Overhead</span></div>
+      <div class="hst-sep"></div>
+      <div class="hst"><span class="hst-v">MIT</span><span class="hst-l">License</span></div>
+    </div>
+  </div>
+
+  <!-- CODE PANE -->
+  <div class="hero-r">
+    <div class="cw">
+      <div class="cw-bar">
+        <div class="wdots"><span class="wd wd-r"></span><span class="wd wd-y"></span><span class="wd wd-g"></span></div>
+        <div class="cw-tabs">
+          <div class="cwt on" data-tab="scanner" onclick="swTab(this)"><span class="cwt-dot" style="background:var(--accent)"></span>ai-scanner.ts</div>
+          <div class="cwt" data-tab="gateway" onclick="swTab(this)"><span class="cwt-dot" style="background:var(--green)"></span>gateway.go</div>
+          <div class="cwt" data-tab="keygate" onclick="swTab(this)"><span class="cwt-dot" style="background:var(--blue)"></span>keygate.ts</div>
+        </div>
+        <button class="cw-copy" onclick="copyTab(this)">copy</button>
+      </div>
+      <div>
+        <!-- SCANNER -->
+        <div class="tab-c on cb" id="tab-scanner">
+          <div class="cl"><span class="ln">1</span><span class="cmt">// scan any codebase for AI SDKs, keys, frameworks</span></div>
+          <div class="cl hl"><span class="ln">2</span><span class="k">import</span><span class="p"> { scan } </span><span class="k">from</span><span class="s"> 'ai-scanner'</span></div>
+          <div class="cl"><span class="ln">3</span></div>
+          <div class="cl"><span class="ln">4</span><span class="k">const</span><span class="n"> result</span><span class="o"> =</span><span class="k"> await</span><span class="fn"> scan</span><span class="p">({</span></div>
+          <div class="cl"><span class="ln">5</span><span class="p">  path:</span><span class="s"> './src'</span><span class="p">,</span></div>
+          <div class="cl"><span class="ln">6</span><span class="p">  checks: [</span><span class="s">'sdks'</span><span class="p">,</span><span class="s"> 'tokens'</span><span class="p">,</span><span class="s"> 'frameworks'</span><span class="p">],</span></div>
+          <div class="cl"><span class="ln">7</span><span class="p">  exitOnExposed:</span><span class="k"> true</span><span class="p">,</span></div>
+          <div class="cl"><span class="ln">8</span><span class="p">})</span></div>
+          <div class="cl"><span class="ln">9</span></div>
+          <div class="cl"><span class="ln">10</span><span class="cmt">// result.sdks   → ['openai', '@anthropic-ai/sdk', 'langchain']</span></div>
+          <div class="cl"><span class="ln">11</span><span class="cmt">// result.exposed → [{ key: 'OPENAI_API_KEY', file: '.env' }]</span></div>
+          <div class="cl"><span class="ln">12</span></div>
+          <div class="cl hl"><span class="ln">13</span><span class="k">if</span><span class="p"> (result.exposed.length</span><span class="o"> &gt;</span><span class="num"> 0</span><span class="p">) process.</span><span class="fn">exit</span><span class="p">(</span><span class="num">1</span><span class="p">)</span><span class="cmt"> // fail CI</span></div>
+          <div class="cl"><span class="ln">14</span></div>
+          <div class="cl"><span class="ln">15</span><span class="cmt">// also an MCP server: Claude Code, Cursor, Windsurf</span></div>
+        </div>
+        <!-- GATEWAY -->
+        <div class="tab-c cb" id="tab-gateway">
+          <div class="cl"><span class="ln">1</span><span class="cmt">// zero-dep LLM router in Go — drop-in OpenAI-compatible</span></div>
+          <div class="cl"><span class="ln">2</span><span class="k">package</span><span class="t"> main</span></div>
+          <div class="cl"><span class="ln">3</span></div>
+          <div class="cl"><span class="ln">4</span><span class="k">import</span><span class="p"> (</span><span class="s">"github.com/llmhut/gateway"</span><span class="p">)</span></div>
+          <div class="cl"><span class="ln">5</span></div>
+          <div class="cl hl"><span class="ln">6</span><span class="k">func</span><span class="fn"> main</span><span class="p">() {</span></div>
+          <div class="cl hl"><span class="ln">7</span><span class="p">  gateway.</span><span class="fn">New</span><span class="p">().</span></div>
+          <div class="cl"><span class="ln">8</span><span class="p">    </span><span class="fn">Provider</span><span class="p">(</span><span class="s">"openai"</span><span class="p">, os.</span><span class="fn">Getenv</span><span class="p">(</span><span class="s">"OPENAI_KEY"</span><span class="p">)).</span></div>
+          <div class="cl"><span class="ln">9</span><span class="p">    </span><span class="fn">Provider</span><span class="p">(</span><span class="s">"anthropic"</span><span class="p">, os.</span><span class="fn">Getenv</span><span class="p">(</span><span class="s">"ANTHROPIC_KEY"</span><span class="p">)).</span></div>
+          <div class="cl"><span class="ln">10</span><span class="p">    </span><span class="fn">Fallback</span><span class="p">(</span><span class="s">"anthropic"</span><span class="p">).</span></div>
+          <div class="cl"><span class="ln">11</span><span class="p">    </span><span class="fn">Listen</span><span class="p">(</span><span class="s">":8080"</span><span class="p">)</span></div>
+          <div class="cl"><span class="ln">12</span><span class="p">}</span></div>
+          <div class="cl"><span class="ln">13</span></div>
+          <div class="cl"><span class="ln">14</span><span class="cmt">// your app points to localhost:8080 — swap providers in config</span></div>
+        </div>
+        <!-- KEYGATE -->
+        <div class="tab-c cb" id="tab-keygate">
+          <div class="cl"><span class="ln">1</span><span class="cmt">// provision real vendor keys per developer</span></div>
+          <div class="cl"><span class="ln">2</span><span class="k">const</span><span class="n"> kg</span><span class="o"> =</span><span class="k"> new</span><span class="t"> KeyGate</span><span class="p">({ url:</span><span class="s"> 'http://keygate.internal'</span><span class="p"> })</span></div>
+          <div class="cl"><span class="ln">3</span></div>
+          <div class="cl hl"><span class="ln">4</span><span class="k">const</span><span class="n"> key</span><span class="o"> =</span><span class="k"> await</span><span class="n"> kg</span><span class="p">.</span><span class="fn">provision</span><span class="p">({</span></div>
+          <div class="cl hl"><span class="ln">5</span><span class="p">  developer:</span><span class="s"> 'priya@team'</span><span class="p">,</span></div>
+          <div class="cl hl"><span class="ln">6</span><span class="p">  vendor:</span><span class="s">    'openai'</span><span class="p">,</span></div>
+          <div class="cl hl"><span class="ln">7</span><span class="p">  budget:</span><span class="num">    100</span><span class="p">,</span><span class="cmt"> // USD cap, vendor-enforced</span></div>
+          <div class="cl"><span class="ln">8</span><span class="p">})</span></div>
+          <div class="cl"><span class="ln">9</span></div>
+          <div class="cl"><span class="ln">10</span><span class="cmt">// key.value → 'sk-proj-...7xKm' (real OpenAI key)</span></div>
+          <div class="cl"><span class="ln">11</span></div>
+          <div class="cl"><span class="ln">12</span><span class="k">await</span><span class="n"> kg</span><span class="p">.</span><span class="fn">revoke</span><span class="p">(</span><span class="s">'priya@team'</span><span class="p">)</span><span class="cmt"> // instant, vendor-level</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- terminal strip -->
+    <div class="tstrip">
+      <div class="ts-bar">
+        <div class="wdots"><span class="wd wd-r"></span><span class="wd wd-y"></span><span class="wd wd-g"></span></div>
+        terminal
+      </div>
+      <div class="ts-body" id="tsBody">
+        <span class="tl"><span class="cm">$</span> <span style="color:var(--text2)">npx ai-scanner ./src --exit-code</span></span>
+        <span class="tl" id="tl1" style="opacity:0;transition:opacity 0.3s"><span class="cm">  scanning 847 files ···</span></span>
+        <span class="tl" id="tl2" style="opacity:0;transition:opacity 0.3s"><span class="cg">  ✓ openai · @anthropic-ai/sdk · langchain</span></span>
+        <span class="tl" id="tl3" style="opacity:0;transition:opacity 0.3s"><span class="cb2">  ✓ 23 SDKs · 0 exposed keys · 2 frameworks</span></span>
+        <span class="tl" id="tl4" style="opacity:0;transition:opacity 0.3s"><span class="cg">  exit 0</span><span class="cm"> — clean, CI passed</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<div class="divider"></div>
+<section class="sec" id="projects">
+  <div class="wrap">
+    <div class="r" style="margin-bottom:48px">
+      <span class="etag">Projects</span>
+      <h2 class="stitle">Three tools. One stack.</h2>
+      <p class="sdesc" style="max-width:520px">Each solves a distinct layer of AI ops. Use one or all — independently deployable, MIT &amp; Apache 2.0.</p>
+    </div>
+    <div class="pgrid">
+
+      <!-- ai-scanner -->
+      <div class="pcard r">
+        <div class="pc-info">
+          <div class="pc-top">
+            <span class="ptag tor">JS · CLI · MCP</span>
+            <div class="pstars"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 47</div>
+          </div>
+          <div class="pname">ai-scanner</div>
+          <p class="pdesc">Scan any codebase for LLM SDK usage, AI framework integrations, and exposed API tokens. Runs as a CLI, CI step, or MCP server for Claude Code, Cursor, and Windsurf.</p>
+          <div class="pmeta">
+            <div class="pst"><span class="psv count-up" data-target="145">0</span><span class="psl">Patterns</span></div>
+            <div class="pssep"></div>
+            <div class="pst"><span class="psv count-up" data-target="23">0</span><span class="psl">SDKs</span></div>
+            <div class="pssep"></div>
+            <div class="pst"><span class="psv count-up" data-target="24">0</span><span class="psl">Frameworks</span></div>
+          </div>
+          <a href="https://github.com/llmhut/ai-scanner-mcp" target="_blank" class="plink lor">
+            github.com/llmhut/ai-scanner
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+        <div class="pc-code">
+          <div class="pc-code-bar">
+            <div class="wdots"><span class="wd wd-r"></span><span class="wd wd-y"></span><span class="wd wd-g"></span></div>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-left:6px">$ npx ai-scanner ./my-project --verbose</span>
+          </div>
+          <div class="pc-code-body" style="padding:16px 20px">
+            <span class="fl"><span class="cm">  scanning</span> <span style="color:var(--text2)">847 files</span> <span class="cm">in ./my-project</span></span>
+            <span class="fbl"></span>
+            <span class="fl"><span class="cb2">  SDKs detected:</span></span>
+            <span class="fl"><span class="cg">    ✓ openai</span><span class="cm">              src/lib/ai.ts:3</span></span>
+            <span class="fl"><span class="cg">    ✓ @anthropic-ai/sdk</span><span class="cm">   src/chat.ts:1</span></span>
+            <span class="fl"><span class="cg">    ✓ @google/generative-ai</span><span class="cm"> src/gen.ts:2</span></span>
+            <span class="fbl"></span>
+            <span class="fl"><span class="cb2">  Frameworks:</span></span>
+            <span class="fl"><span class="cg">    ✓ langchain</span><span class="cm">           src/chain.ts:1</span></span>
+            <span class="fl"><span class="cg">    ✓ llamaindex</span><span class="cm">          src/index.ts:5</span></span>
+            <span class="fbl"></span>
+            <span class="fl"><span class="cr">  ✗ OPENAI_API_KEY</span><span class="cm">     .env.local:4 (not gitignored!)</span></span>
+            <span class="fbl"></span>
+            <span class="fl" style="color:var(--text2)">  3 SDKs · 2 frameworks · <span class="cr">1 exposed key</span></span>
+            <span class="fl"><span class="cr">  exit 1</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- gateway -->
+      <div class="pcard rv r d1">
+        <div class="pc-info">
+          <div class="pc-top">
+            <span class="ptag tgr">Go · Gateway · Docker</span>
+            <div class="pstars"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 38</div>
+          </div>
+          <div class="pname">gateway</div>
+          <p class="pdesc">Blazing-fast LLM router in Go. Drop-in OpenAI-compatible — point your existing SDK at <code style="font-family:var(--mono);font-size:12px;color:var(--green)">localhost:8080</code> and swap providers without touching app code.</p>
+          <div class="pmeta">
+            <div class="pst"><span class="psv">&lt;1ms</span><span class="psl">Overhead</span></div>
+            <div class="pssep"></div>
+            <div class="pst"><span class="psv">5</span><span class="psl">Providers</span></div>
+            <div class="pssep"></div>
+            <div class="pst"><span class="psv">0</span><span class="psl">Deps</span></div>
+          </div>
+          <a href="https://github.com/llmhut/gateway" target="_blank" class="plink lgr">
+            github.com/llmhut/gateway
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+        <div class="pc-code">
+          <div class="pc-code-bar">
+            <div class="wdots"><span class="wd wd-r"></span><span class="wd wd-y"></span><span class="wd wd-g"></span></div>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-left:6px">gateway.yaml</span>
+          </div>
+          <div class="pc-code-body" style="padding:16px 20px;font-family:var(--mono);font-size:12px;line-height:1.9">
+            <span class="fl"><span style="color:var(--blue)">providers</span><span class="cm">:</span></span>
+            <span class="fl"><span class="cm">  - </span><span style="color:var(--blue)">name</span><span class="cm">:</span> <span style="color:var(--green)">openai</span></span>
+            <span class="fl"><span class="cm">    </span><span style="color:var(--blue)">key</span><span class="cm">:</span>  <span class="cm">$OPENAI_KEY</span></span>
+            <span class="fl"><span class="cm">  - </span><span style="color:var(--blue)">name</span><span class="cm">:</span> <span style="color:var(--green)">anthropic</span></span>
+            <span class="fl"><span class="cm">    </span><span style="color:var(--blue)">key</span><span class="cm">:</span>  <span class="cm">$ANTHROPIC_KEY</span></span>
+            <span class="fl"><span class="cm">  - </span><span style="color:var(--blue)">name</span><span class="cm">:</span> <span style="color:var(--green)">groq</span></span>
+            <span class="fl"><span class="cm">    </span><span style="color:var(--blue)">key</span><span class="cm">:</span>  <span class="cm">$GROQ_KEY</span></span>
+            <span class="fbl"></span>
+            <span class="fl"><span style="color:var(--blue)">routing</span><span class="cm">:</span></span>
+            <span class="fl"><span class="cm">  </span><span style="color:var(--blue)">strategy</span><span class="cm">:</span> <span style="color:var(--yellow)">fallback</span></span>
+            <span class="fl"><span class="cm">  </span><span style="color:var(--blue)">primary</span><span class="cm">:</span>  <span style="color:var(--green)">openai</span></span>
+            <span class="fl"><span class="cm">  </span><span style="color:var(--blue)">fallback</span><span class="cm">:</span> <span style="color:var(--green)">anthropic</span></span>
+            <span class="fbl"></span>
+            <span class="fl"><span style="color:var(--blue)">listen</span><span class="cm">: </span><span style="color:var(--yellow)">:8080</span> <span class="cm"># OpenAI-compatible endpoint</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- keygate -->
+      <div class="pcard r d2">
+        <div class="pc-info">
+          <div class="pc-top">
+            <span class="ptag tbl3">JS · REST API · Docker</span>
+            <div class="pstars"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 57</div>
+          </div>
+          <div class="pname">KeyGate</div>
+          <p class="pdesc">Per-developer vendor API keys — real keys, not proxy tokens. Provision, revoke, rotate with vendor-level enforcement. Budget caps and immutable audit log baked in.</p>
+          <div class="pmeta">
+            <div class="pst"><span class="psv count-up" data-target="4">0</span><span class="psl">Vendors</span></div>
+            <div class="pssep"></div>
+            <div class="pst"><span class="psv">Real</span><span class="psl">Keys</span></div>
+            <div class="pssep"></div>
+            <div class="pst"><span class="psv">&lt;50ms</span><span class="psl">Provision</span></div>
+          </div>
+          <a href="https://github.com/llmhut/keygate" target="_blank" class="plink lbl">
+            github.com/llmhut/keygate
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+        <div class="pc-code">
+          <div class="pc-code-bar">
+            <div class="wdots"><span class="wd wd-r"></span><span class="wd wd-y"></span><span class="wd wd-g"></span></div>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-left:6px">POST /keys/provision → 201</span>
+          </div>
+          <div class="pc-code-body" style="padding:16px 20px;font-family:var(--mono);font-size:12px;line-height:1.9">
+            <span class="fl"><span class="cm">// request body</span></span>
+            <span class="fl"><span class="cm">{</span></span>
+            <span class="fl"><span class="cm">  </span><span style="color:var(--blue)">"developer"</span><span class="cm">:</span> <span style="color:var(--green)">"priya@team"</span><span class="cm">,</span></span>
+            <span class="fl"><span class="cm">  </span><span style="color:var(--blue)">"vendor"</span><span class="cm">:</span>    <span style="color:var(--green)">"openai"</span><span class="cm">,</span></span>
+            <span class="fl"><span class="cm">  </span><span style="color:var(--blue)">"budget"</span><span class="cm">:</span>    <span style="color:var(--yellow)">100</span></span>
+            <span class="fl"><span class="cm">}</span></span>
+            <span class="fbl"></span>
+            <span class="fl"><span class="cm">// 201 response</span></span>
+            <span class="fl"><span class="cm">{</span></span>
+            <span class="fl"><span class="cm">  </span><span style="color:var(--blue)">"key"</span><span class="cm">:</span>    <span style="color:var(--green)">"sk-proj-...7xKm"</span><span class="cm">,</span></span>
+            <span class="fl"><span class="cm">  </span><span style="color:var(--blue)">"scoped"</span><span class="cm">:</span> <span style="color:var(--yellow)">true</span><span class="cm">,</span></span>
+            <span class="fl"><span class="cm">  </span><span style="color:var(--blue)">"budget"</span><span class="cm">:</span> <span style="color:var(--yellow)">100</span><span class="cm">,</span></span>
+            <span class="fl"><span class="cm">  </span><span style="color:var(--blue)">"audit"</span><span class="cm">:</span>  <span style="color:var(--green)">"immutable"</span></span>
+            <span class="fl"><span class="cm">}</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- roadmap -->
+    <div class="rmtbl r">
+      <div class="rm-hr"><span>Feature</span><span>Description</span><span>Status</span></div>
+      <div class="rm-r"><span class="rm-n">llm-obs</span><span class="rm-d">Request tracing, token dashboards, cost attribution per dev</span><span class="rmbadge rb-s">Coming soon</span></div>
+      <div class="rm-r"><span class="rm-n">eval-pipeline</span><span class="rm-d">Structured evals against prompts &amp; models — CI/CD native</span><span class="rmbadge rb-p">Planned</span></div>
+      <div class="rm-r"><span class="rm-n">deploy-prims</span><span class="rm-d">Minimal tooling for shipping LLM services to production</span><span class="rmbadge rb-p">Planned</span></div>
+      <div class="rm-r"><span class="rm-n">event-system</span><span class="rm-d">Webhooks + streams for key lifecycle, usage thresholds</span><span class="rmbadge rb-p">Planned</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- QUICKSTART -->
+<div class="divider"></div>
+<section class="sec" id="quickstart">
+  <div class="wrap">
+    <div class="qs-wrap">
+      <div class="r">
+        <span class="etag">Quickstart</span>
+        <h2 class="stitle">Up in under<br/>5 minutes.</h2>
+        <p class="sdesc" style="margin-bottom:36px">No account required. No cloud. Self-host everything.</p>
+        <div class="qs-steps">
+          <div class="qsstep done r d1"><div class="qsnum">✓</div><div><div class="qst">Scan your codebase</div><div class="qsd">Find every AI SDK, framework, and exposed key before pushing to prod.</div></div></div>
+          <div class="qsstep r d2"><div class="qsnum">2</div><div><div class="qst">Deploy the gateway</div><div class="qsd">One Docker command — your app keeps calling the OpenAI API shape.</div></div></div>
+          <div class="qsstep r d3"><div class="qsnum">3</div><div><div class="qst">Issue developer keys</div><div class="qsd">Provision real vendor keys with budgets. No shared <code style="font-family:var(--mono);font-size:11px">OPENAI_API_KEY</code> in Slack.</div></div></div>
+          <div class="qsstep r d4"><div class="qsnum">4</div><div><div class="qst">Add to CI</div><div class="qsd">Run <code style="font-family:var(--mono);font-size:11px">ai-scanner --exit-code</code> in your pipeline. Fail fast on exposed keys.</div></div></div>
+        </div>
+      </div>
+
+      <div class="ft r d1">
+        <div class="ft-bar">
+          <div class="wdots"><span class="wd wd-r"></span><span class="wd wd-y"></span><span class="wd wd-g"></span></div>
+          <span class="ft-lbl">bash — quickstart</span>
+        </div>
+        <div class="ft-body">
+          <span class="fl"><span class="cm"># 1. scan your codebase</span></span>
+          <span class="fl"><span class="co">$</span> <span style="color:var(--text2)">npx ai-scanner ./src --exit-code</span></span>
+          <span class="fl"><span class="cg">  ✓ 23 SDKs · 0 exposed keys · exit 0</span></span>
+          <span class="fbl"></span>
+          <span class="fl"><span class="cm"># 2. run the gateway (OpenAI-compatible)</span></span>
+          <span class="fl"><span class="co">$</span> <span style="color:var(--text2)">docker run -d \</span></span>
+          <span class="fl"><span style="color:var(--text2)">    -p 8080:8080 \</span></span>
+          <span class="fl"><span style="color:var(--text2)">    -e OPENAI_KEY=$OPENAI_KEY \</span></span>
+          <span class="fl"><span style="color:var(--text2)">    -e ANTHROPIC_KEY=$ANTHROPIC_KEY \</span></span>
+          <span class="fl"><span style="color:var(--text2)">    ghcr.io/llmhut/gateway:latest</span></span>
+          <span class="fl"><span class="cg">  ✓ gateway ready on :8080</span></span>
+          <span class="fbl"></span>
+          <span class="fl"><span class="cm"># 3. provision a developer key</span></span>
+          <span class="fl"><span class="co">$</span> <span style="color:var(--text2)">curl -X POST http://localhost:3001/keys/provision \</span></span>
+          <span class="fl"><span style="color:var(--text2)">  -d '{"developer":"priya","vendor":"openai","budget":100}'</span></span>
+          <span class="fl"><span class="cg">  ✓ sk-proj-...7xKm provisioned · $100 cap</span></span>
+          <span class="fbl"></span>
+          <span class="fl"><span class="cm"># 4. add to GitHub Actions</span></span>
+          <span class="fl"><span class="co">$</span> <span style="color:var(--text2)">echo "- run: npx ai-scanner ./src --exit-code" >> .github/workflows/ci.yml</span></span>
+          <span class="fl"><span class="cg">  ✓ CI will now fail on exposed keys</span></span>
+          <span class="fbl"></span>
+          <span class="fl"><span class="cm"># done. full stack running.</span></span>
+          <span class="fl"><span class="co">$</span> <span style="color:var(--text2)">█</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<div class="divider"></div>
+<section class="sec" id="why">
+  <div class="wrap">
+    <div class="r" style="margin-bottom:48px">
+      <span class="etag">Why llmhut</span>
+      <h2 class="stitle">Stop duct-taping<br/>your AI ops.</h2>
+      <p class="sdesc" style="max-width:520px">You wouldn't share one database password across your whole team. So why share one <code style="font-family:var(--mono);font-size:13px">OPENAI_API_KEY</code>?</p>
+    </div>
+    <div class="why-g">
+      <div class="why-col r">
+        <div class="why-head">
+          <div class="why-ico" style="background:rgba(248,113,113,0.1)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>
+          <div><div class="why-title">Without llmhut</div><div class="why-sub">how most teams operate today</div></div>
+        </div>
+        <div class="why-items">
+          <div class="wi"><div class="wi-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div><div class="wi-t">One shared API key in Slack/Notion</div><div class="wi-s">Everyone hits the same key, no attribution</div></div></div>
+          <div class="wi"><div class="wi-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div><div class="wi-t">No idea what SDKs are in prod</div><div class="wi-s">Someone added LangChain 3 months ago</div></div></div>
+          <div class="wi"><div class="wi-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div><div class="wi-t">Keys committed to git</div><div class="wi-s">GitHub secret scan catches it 3 days later</div></div></div>
+          <div class="wi"><div class="wi-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div><div class="wi-t">Switching providers = rewrite</div><div class="wi-s">Hard-coded OpenAI SDK everywhere</div></div></div>
+        </div>
+      </div>
+      <div class="why-col r d2">
+        <div class="why-head">
+          <div class="why-ico" style="background:rgba(74,222,128,0.1)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+          <div><div class="why-title">With llmhut</div><div class="why-sub">infrastructure that scales with you</div></div>
+        </div>
+        <div class="why-items">
+          <div class="wi"><div class="wi-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="wi-t">Per-dev vendor keys with budget caps</div><div class="wi-s">Real keys, vendor-enforced, instant revoke</div></div></div>
+          <div class="wi"><div class="wi-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="wi-t">Full SDK &amp; framework audit in CI</div><div class="wi-s">145 patterns, 23 SDKs, exit-code support</div></div></div>
+          <div class="wi"><div class="wi-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="wi-t">Token scanning in every PR</div><div class="wi-s">Fails CI before the key ever reaches git</div></div></div>
+          <div class="wi"><div class="wi-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="wi-t">Provider-agnostic gateway</div><div class="wi-s">Change providers in config, not code</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMUNITY -->
+<div class="divider"></div>
+<section class="sec" id="community">
+  <div class="wrap">
+    <div style="max-width:480px" class="r">
+      <span class="etag">Community</span>
+      <h2 class="stitle">Open source.<br/>PRs welcome.</h2>
+      <p class="sdesc">Early-stage infrastructure. Your patterns, edge cases, and providers — make them part of the stack.</p>
+    </div>
+    <div class="cc-g">
+      <a class="cc-c r d1" href="https://github.com/llmhut" target="_blank">
+        <div class="cc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <div class="cc-n">Star on GitHub</div>
+        <p class="cc-d">Help other developers find these tools. 142 stars and growing.</p>
+        <span class="cc-l">github.com/llmhut →</span>
+      </a>
+      <a class="cc-c r d2" href="https://github.com/llmhut/ai-scanner-mcp/issues" target="_blank">
+        <div class="cc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div class="cc-n">File an issue</div>
+        <p class="cc-d">Missing SDK pattern, broken detection? Every report sharpens the tool.</p>
+        <span class="cc-l">Open an issue →</span>
+      </a>
+      <a class="cc-c r d3" href="https://github.com/llmhut/gateway/pulls" target="_blank">
+        <div class="cc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg></div>
+        <div class="cc-n">Contribute</div>
+        <p class="cc-d">New providers, SDK patterns, detection rules. CONTRIBUTING.md is short.</p>
+        <span class="cc-l">Submit a PR →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="divider"></div>
+<section class="cta-sec">
+  <div class="wrap">
+    <div class="cta-in r">
+      <span class="etag" style="justify-content:center;margin-bottom:20px">Get started</span>
+      <h2>Build on solid<br/><span class="grad">AI infrastructure.</span></h2>
+      <p>MIT &amp; Apache 2.0. Self-hosted. No account needed.<br/>Built for developers who move fast and break nothing.</p>
+      <div class="cta-btns">
+        <a href="https://github.com/llmhut" target="_blank" class="btn-p">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+          Browse repos
+        </a>
+        <a href="https://aakashbhardwaj27.github.io/keygate/" target="_blank" class="btn-g">KeyGate docs</a>
+        <a href="https://aakashbhardwaj27.github.io/ai-scanner/" target="_blank" class="btn-g">ai-scanner docs</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="fi">
+      <div class="fl2">
+        <a href="#" class="logo">
+          <div class="logo-ico" style="width:22px;height:22px;border-radius:6px">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          </div>
+          <span class="logo-name" style="font-size:12px">llmhut</span>
+        </a>
+        <span class="fc">MIT &amp; Apache 2.0 · Open AI infrastructure</span>
+      </div>
+      <div class="flinks">
+        <a href="https://github.com/llmhut">GitHub</a>
+        <a href="https://github.com/llmhut/ai-scanner-mcp">ai-scanner</a>
+        <a href="https://github.com/llmhut/keygate">KeyGate</a>
+        <a href="https://github.com/llmhut/gateway">gateway</a>
+        <a href="https://aakashbhardwaj27.github.io/keygate/">Docs</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// THEME
+(function(){
+  const html=document.documentElement,btn=document.getElementById('themeBtn'),KEY='llmhut-theme';
+  function set(t){html.setAttribute('data-theme',t);localStorage.setItem(KEY,t);}
+  set(localStorage.getItem(KEY)||(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'));
+  btn.addEventListener('click',()=>set(html.dataset.theme==='dark'?'light':'dark'));
+  window.matchMedia('(prefers-color-scheme:light)').addEventListener('change',e=>{if(!localStorage.getItem(KEY))set(e.matches?'light':'dark');});
+})();
+
+// TAB SWITCHER
+function swTab(el){
+  const tab=el.dataset.tab;
+  document.querySelectorAll('.cwt').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.tab-c').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('tab-'+tab).classList.add('on');
+  const outs={
+    scanner:['<span class="cm">$</span> <span style="color:var(--text2)">npx ai-scanner ./src --exit-code</span>','<span class="cm">  scanning 847 files ···</span>','<span class="cg">  ✓ openai · @anthropic-ai/sdk · langchain</span>','<span class="cb2">  ✓ 23 SDKs · 0 exposed keys</span>','<span class="cg">  exit 0 — clean, CI passed</span>'],
+    gateway:['<span class="cm">$</span> <span style="color:var(--text2)">docker run -p 8080:8080 ghcr.io/llmhut/gateway</span>','<span class="cm">  loading config ···</span>','<span class="cg">  ✓ openai registered</span>','<span class="cg">  ✓ anthropic registered (fallback)</span>','<span class="cb2">  ready :8080 — &lt;1ms overhead</span>'],
+    keygate:['<span class="cm">$</span> <span style="color:var(--text2)">curl POST /keys/provision -d \'{"dev":"priya"}\'</span>','<span class="cm">  provisioning with openai ···</span>','<span class="cg">  ✓ sk-proj-...7xKm issued</span>','<span class="cb2">  ✓ $100 budget · audit logged</span>','<span class="cm">  201 Created</span>'],
+  };
+  const lines=outs[tab]||outs.scanner;
+  const body=document.getElementById('tsBody');
+  body.innerHTML=lines.map((l,i)=>`<span class="tl"${i>0?' id="tl'+i+'" style="opacity:0;transition:opacity 0.3s"':''}>${l}</span>`).join('');
+  [1,2,3,4].forEach((n,i)=>{const e=document.getElementById('tl'+n);if(e)setTimeout(()=>e.style.opacity='1',400+i*300);});
+}
+
+// terminal animate on load
+setTimeout(()=>{[1,2,3,4].forEach((n,i)=>{const e=document.getElementById('tl'+n);if(e)setTimeout(()=>e.style.opacity='1',600+i*350);});},1000);
+
+// COPY buttons
+document.querySelectorAll('.icmd').forEach(cmd=>{
+  cmd.addEventListener('click',()=>{
+    navigator.clipboard?.writeText(cmd.dataset.copy||'');
+    cmd.classList.add('copied');
+    const b=cmd.querySelector('.cpybtn');
+    b.textContent='copied!';
+    setTimeout(()=>{cmd.classList.remove('copied');b.textContent='copy';},2000);
+  });
+});
+
+document.querySelector('.cw-copy')?.addEventListener('click',function(){
+  const active=document.querySelector('.tab-c.on');
+  navigator.clipboard?.writeText(active?.innerText||'');
+  this.textContent='copied!';
+  setTimeout(()=>this.textContent='copy',1800);
+});
+
+// SCROLL REVEAL
+const ro=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in');});},{threshold:0.06,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.r').forEach(el=>ro.observe(el));
+
+// COUNT UP
+const cu=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(!e.isIntersecting||e.target.dataset.done)return;
+    e.target.dataset.done='1';
+    const target=+e.target.dataset.target;if(isNaN(target))return;
+    const t0=performance.now(),dur=1400;
+    const tick=now=>{const p=Math.min((now-t0)/dur,1);e.target.textContent=Math.floor((1-Math.pow(1-p,3))*target).toLocaleString();if(p<1)requestAnimationFrame(tick);};
+    requestAnimationFrame(tick);
+  });
+},{threshold:0.5});
+document.querySelectorAll('.count-up').forEach(el=>cu.observe(el));
+</script>
+</body>
+</html>

@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>llmhut — Open AI Infrastructure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --f:'DM Sans',system-ui,sans-serif;
+  --fd:system-ui,sans-serif;
+  --m:'DM Mono','Fira Code',monospace;
+  --ease:cubic-bezier(.19,1,.22,1);
+  --ease2:cubic-bezier(.16,1,.3,1);
+}
+
+[data-theme="dark"]{
+  --bg:#080b0f;
+  --bg1:#0d1117;
+  --bg2:#111720;
+  --bg3:#161e2d;
+  --bg4:#1c2535;
+  --bo:rgba(99,140,220,.1);
+  --bo2:rgba(99,140,220,.16);
+  --bo3:rgba(99,140,220,.24);
+  --tx:#eef2ff;
+  --tx2:rgba(220,230,255,.75);
+  --mu:rgba(180,200,255,.45);
+  --di:rgba(180,200,255,.22);
+  --na:rgba(8,11,15,.88);
+  --ca:rgba(99,140,220,.04);
+  --acc:#4f83f1;
+  --acc2:#7ba5f8;
+  --key:#10e898;
+  --key2:#0acc80;
+  --scan:#f97316;
+  --gw:#a78bfa;
+}
+[data-theme="light"]{
+  --bg:#f0f4ff;
+  --bg1:#e8eeff;
+  --bg2:#fff;
+  --bg3:#f5f8ff;
+  --bg4:#edf1ff;
+  --bo:rgba(60,100,220,.1);
+  --bo2:rgba(60,100,220,.16);
+  --bo3:rgba(60,100,220,.24);
+  --tx:#0d1433;
+  --tx2:rgba(13,20,51,.75);
+  --mu:rgba(13,20,51,.5);
+  --di:rgba(13,20,51,.3);
+  --na:rgba(240,244,255,.92);
+  --ca:rgba(60,100,220,.04);
+  --acc:#2563eb;
+  --acc2:#3b82f6;
+  --key:#059669;
+  --key2:#10b981;
+  --scan:#ea580c;
+  --gw:#7c3aed;
+}
+
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--tx);
+  font-family:var(--f);font-size:15px;line-height:1.6;
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;
+}
+
+/* ── NOISE TEXTURE ── */
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:999;
+  opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── GRID ── */
+.gbg{
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(79,131,241,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(79,131,241,.04) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse 100% 80% at 50% 0%,black 20%,transparent 70%);
+}
+
+/* ── ORBS ── */
+.orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(100px);animation:odrift ease-in-out infinite}
+.o1{width:800px;height:800px;background:radial-gradient(circle,rgba(16,232,152,.06),transparent 70%);top:-300px;left:-200px;animation-duration:28s}
+.o2{width:600px;height:600px;background:radial-gradient(circle,rgba(79,131,241,.07),transparent 70%);top:30%;right:-200px;animation-duration:34s;animation-delay:-10s}
+.o3{width:500px;height:500px;background:radial-gradient(circle,rgba(167,139,250,.05),transparent 70%);bottom:20%;left:30%;animation-duration:22s;animation-delay:-18s}
+@keyframes odrift{0%,100%{transform:translate(0,0)}33%{transform:translate(40px,-60px)}66%{transform:translate(-30px,40px)}}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:900;height:58px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(16px,4vw,48px);
+  background:var(--na);
+  backdrop-filter:saturate(160%) blur(24px);
+  border-bottom:1px solid var(--bo);
+  animation:navIn .6s var(--ease) both;
+}
+@keyframes navIn{from{opacity:0;transform:translateY(-100%)}to{opacity:1;transform:translateY(0)}}
+
+.nL{display:flex;align-items:center;gap:40px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--tx)}
+.lic{
+  width:30px;height:30px;border-radius:8px;
+  background:linear-gradient(145deg,var(--key),var(--key2));
+  display:grid;place-items:center;flex-shrink:0;
+  box-shadow:0 0 24px rgba(16,232,152,.3);
+}
+.lnm{font-family:var(--fd);font-size:15px;font-weight:700;letter-spacing:-.02em}
+.lv{color:var(--mu);font-weight:400;font-family:var(--m);font-size:12px}
+
+.nlinks{display:flex;gap:2px}
+.nl{padding:5px 14px;font-size:13px;font-weight:500;color:var(--mu);text-decoration:none;border-radius:7px;transition:all .2s;font-family:var(--f)}
+.nl:hover{color:var(--tx);background:var(--ca)}
+
+.nR{display:flex;align-items:center;gap:8px}
+.tbtn{width:34px;height:34px;border-radius:8px;border:1px solid var(--bo2);background:var(--ca);cursor:pointer;display:grid;place-items:center;color:var(--mu);transition:all .2s}
+.tbtn:hover{color:var(--tx);background:var(--bg3)}
+.tbtn svg{width:14px;height:14px}
+.isun{display:none}.imoon{display:block}
+[data-theme="light"] .isun{display:block}[data-theme="light"] .imoon{display:none}
+
+.ghb{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 18px;border-radius:8px;
+  border:1px solid var(--bo2);
+  background:var(--ca);color:var(--tx2);
+  font-size:13px;font-weight:500;text-decoration:none;
+  transition:all .2s;backdrop-filter:blur(8px);
+}
+.ghb:hover{border-color:var(--bo3);background:var(--bg3);color:var(--tx)}
+.ghstar{font-family:var(--m);font-size:11px;color:var(--key);font-weight:500}
+
+/* ── HERO ── */
+.hero{
+  position:relative;z-index:2;
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+  padding:110px 24px 80px;
+}
+
+.h-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:5px 16px 5px 8px;border:1px solid var(--bo2);border-radius:40px;
+  font-family:var(--m);font-size:11px;color:var(--mu);
+  background:var(--ca);margin-bottom:40px;
+  opacity:0;animation:fup .7s .2s var(--ease2) forwards;
+  backdrop-filter:blur(8px);
+}
+.pdot{width:22px;height:22px;border-radius:50%;background:rgba(16,232,152,.1);display:grid;place-items:center}
+.pdot::after{content:'';width:7px;height:7px;border-radius:50%;background:var(--key);animation:pdp 2.5s ease-in-out infinite}
+@keyframes pdp{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+@keyframes fup{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── HERO HEADLINE ── */
+.hero-eyebrow{
+  font-family:var(--m);font-size:11px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--key);margin-bottom:20px;
+  opacity:0;animation:fup .7s .28s var(--ease2) forwards;
+}
+
+h1{
+  font-family:var(--fd);
+  font-size:clamp(3rem,4vw,4rem);font-weight:800;
+  letter-spacing:-.04em;line-height:.95;margin-bottom:8px;
+  opacity:0;animation:hIn 1s .38s var(--ease2) forwards;
+}
+@keyframes hIn{from{opacity:0;transform:translateY(40px) scale(.97);filter:blur(12px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+
+.h1-sub{
+  font-family:var(--fd);
+  font-size:clamp(3rem,7vw,6.5rem);font-weight:800;
+  letter-spacing:-.04em;line-height:.95;margin-bottom:32px;
+  color:var(--key);
+  opacity:0;animation:hIn 1s .46s var(--ease2) forwards;
+  text-shadow:0 0 80px rgba(16,232,152,.35);
+}
+
+.hsub{
+  font-size:clamp(1rem,1.5vw,1.12rem);color:var(--mu);
+  line-height:1.8;max-width:520px;margin:0 auto 52px;
+  opacity:0;animation:fup .8s .56s var(--ease2) forwards;
+}
+.hsub strong{color:var(--tx2);font-weight:500}
+
+/* ── KEYGATE HERO CARD ── */
+.kg-hero{
+  width:100%;max-width:860px;
+  background:var(--bg1);border:1px solid var(--bo2);border-radius:20px;
+  overflow:hidden;
+  opacity:0;animation:fup .9s .68s var(--ease2) forwards;
+  box-shadow:0 0 80px rgba(16,232,152,.06),0 40px 80px rgba(0,0,0,.5);
+  margin-bottom:48px;
+}
+.kg-hero-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--bo);
+}
+.kg-hero-dots{display:flex;gap:5px}
+.kd{width:10px;height:10px;border-radius:50%}
+.kdr{background:#ff5f57}.kdy{background:#febc2e}.kdg{background:#28c840}
+.kg-hero-label{font-family:var(--m);font-size:11px;color:var(--di)}
+.kg-live{display:flex;align-items:center;gap:5px;font-family:var(--m);font-size:10px;color:var(--key)}
+.kg-live-dot{width:6px;height:6px;border-radius:50%;background:var(--key);animation:pdp 2s ease-in-out infinite}
+.kg-hero-body{display:grid;grid-template-columns:1fr 1px 1fr;min-height:280px}
+.kg-col{padding:28px 28px}
+.kg-div{background:var(--bo);width:1px}
+.kg-col-label{font-family:var(--m);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--di);margin-bottom:18px;font-weight:500}
+/* left: provision form */
+.kg-form-row{
+  display:flex;flex-direction:column;gap:10px;
+}
+.kg-field{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 12px;background:var(--bg3);border:1px solid var(--bo);border-radius:8px;
+  font-size:12.5px;transition:border-color .2s;
+}
+.kg-field:hover{border-color:var(--bo2)}
+.kg-field-label{color:var(--mu);font-family:var(--m);font-size:11px}
+.kg-field-val{color:var(--tx2);font-family:var(--m);font-size:11.5px;font-weight:500}
+.kg-field-val.hi{color:var(--key)}
+.kg-btn{
+  margin-top:8px;width:100%;padding:10px 16px;border-radius:8px;
+  background:rgba(16,232,152,.1);border:1px solid rgba(16,232,152,.25);
+  color:var(--key);font-family:var(--m);font-size:12px;font-weight:500;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px;
+}
+.kg-btn:hover{background:rgba(16,232,152,.18);border-color:rgba(16,232,152,.4)}
+
+/* right: response */
+.kg-resp{font-family:var(--m);font-size:12px;line-height:1.9}
+.kr-line{display:flex;gap:10px;padding:2px 0}
+.kr-key{color:var(--di);min-width:110px;flex-shrink:0}
+.kr-val{color:var(--tx2)}
+.kr-val.g{color:var(--key)}
+.kr-val.b{color:var(--acc2)}
+.kr-val.y{color:#fbbf24}
+.kg-resp-key{
+  margin-top:16px;padding:12px 14px;background:var(--bg3);border:1px solid var(--bo2);border-radius:8px;
+  font-family:var(--m);font-size:12px;color:var(--key);letter-spacing:.02em;
+}
+.kg-resp-note{margin-top:8px;font-family:var(--m);font-size:10.5px;color:var(--di);display:flex;align-items:center;gap:6px}
+
+/* stats row */
+.hstats{
+  display:flex;align-items:center;
+  border:1px solid var(--bo2);border-radius:14px;overflow:hidden;
+  background:var(--ca);backdrop-filter:blur(10px);
+  opacity:0;animation:fup .8s .8s var(--ease2) forwards;
+}
+.hst{padding:22px 36px;text-align:center;border-right:1px solid var(--bo);transition:background .2s;cursor:default}
+.hst:last-child{border-right:none}
+.hst:hover{background:rgba(16,232,152,.03)}
+.hsv{font-family:var(--fd);font-size:28px;font-weight:800;letter-spacing:-.04em;line-height:1;margin-bottom:5px}
+.hsl{font-family:var(--m);font-size:10px;color:var(--mu);letter-spacing:.05em;text-transform:uppercase;font-weight:400}
+
+/* ── SECTION SHARED ── */
+.sec{position:relative;z-index:2;padding:100px 0}
+.wrap{max-width:1160px;margin:0 auto;padding:0 clamp(20px,4vw,52px)}
+.div{height:1px;background:var(--bo);position:relative;z-index:2}
+
+.etag{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--m);font-size:10px;font-weight:500;
+  color:var(--key);letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px;
+}
+.etag-dot{width:16px;height:2px;background:var(--key);border-radius:2px}
+
+.stit{
+  font-family:var(--fd);
+  font-size:clamp(2.2rem,4vw,3.4rem);font-weight:800;
+  letter-spacing:-.04em;line-height:1.02;margin-bottom:16px
+}
+.sdsc{font-size:.97rem;color:var(--mu);line-height:1.8;letter-spacing:-.01em}
+
+/* scroll reveal */
+.r{opacity:0;transform:translateY(32px);transition:opacity .85s var(--ease2),transform .85s var(--ease2)}
+.r.in{opacity:1;transform:translateY(0)}
+.d1{transition-delay:.07s}.d2{transition-delay:.14s}.d3{transition-delay:.21s}.d4{transition-delay:.28s}
+
+/* ── FLAGSHIP: KEYGATE DEEP DIVE ── */
+.flagship{padding:120px 0;position:relative;z-index:2;overflow:hidden}
+.flagship-inner{max-width:1200px;margin:0 auto;padding:0 clamp(20px,4vw,52px)}
+
+.flagship-glow{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:1000px;height:600px;pointer-events:none;
+  background:radial-gradient(ellipse,rgba(16,232,152,.04),transparent 60%);
+}
+
+/* 3-col benefit grid */
+.ben-g{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bo2);border:1px solid var(--bo2);border-radius:18px;overflow:hidden;margin-top:56px}
+.ben-c{
+  background:var(--bg1);padding:36px 30px;
+  display:flex;flex-direction:column;gap:14px;
+  transition:background .25s;
+}
+.ben-c:hover{background:var(--bg2)}
+.ben-ico{
+  width:40px;height:40px;border-radius:10px;
+  display:grid;place-items:center;flex-shrink:0;
+}
+.ben-ico svg{width:18px;height:18px}
+.ben-n{font-family:var(--fd);font-size:17px;font-weight:700;letter-spacing:-.03em}
+.ben-d{font-size:13px;color:var(--mu);line-height:1.7}
+.ben-tag{
+  font-family:var(--m);font-size:10px;font-weight:500;
+  padding:3px 10px;border-radius:5px;width:fit-content;letter-spacing:.03em;
+}
+
+/* "How it works" flow */
+.flow{margin-top:80px}
+.flow-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:40px;position:relative}
+.flow-step{
+  background:var(--bg1);border:1px solid var(--bo);border-radius:14px;
+  padding:24px;position:relative;
+  transition:border-color .25s,background .25s;
+}
+.flow-step:hover{border-color:var(--bo2);background:var(--bg2)}
+.flow-step::after{
+  content:'→';
+  position:absolute;top:50%;right:-20px;transform:translateY(-50%);
+  color:var(--bo2);font-size:18px;z-index:1;
+}
+.flow-step:last-child::after{display:none}
+.flow-n{font-family:var(--m);font-size:11px;color:var(--key);margin-bottom:10px;font-weight:500}
+.flow-ico2{margin-bottom:12px}
+.flow-ico2 svg{width:22px;height:22px}
+.flow-t{font-family:var(--fd);font-size:15px;font-weight:700;letter-spacing:-.02em;margin-bottom:8px}
+.flow-d{font-size:12.5px;color:var(--mu);line-height:1.65}
+.flow-hl{
+  margin-top:12px;padding:8px 10px;background:var(--bg3);border:1px solid var(--bo);
+  border-radius:7px;font-family:var(--m);font-size:10.5px;color:var(--di);line-height:1.7;
+}
+
+/* Vendor table */
+.vtbl{margin-top:80px}
+.vt{width:100%;border-collapse:collapse;border:1px solid var(--bo2);border-radius:14px;overflow:hidden}
+.vt thead{background:var(--bg2)}
+.vt th{padding:12px 20px;font-family:var(--m);font-size:10px;color:var(--di);font-weight:500;letter-spacing:.08em;text-transform:uppercase;text-align:left;border-bottom:1px solid var(--bo)}
+.vt td{padding:15px 20px;font-size:13px;border-bottom:1px solid var(--bo);vertical-align:middle}
+.vt tr:last-child td{border-bottom:none}
+.vt tr:hover td{background:rgba(16,232,152,.02)}
+.vt-name{font-weight:600;color:var(--tx2);font-family:var(--fd);font-size:14px}
+.vt-key{font-family:var(--m);font-size:11px;color:var(--key);background:rgba(16,232,152,.07);border:1px solid rgba(16,232,152,.15);padding:2px 10px;border-radius:5px;display:inline-block}
+.vt-badge{font-family:var(--m);font-size:10px;padding:2px 10px;border-radius:5px;font-weight:500;border:1px solid}
+.vts{background:rgba(16,232,152,.07);color:var(--key);border-color:rgba(16,232,152,.2)}
+.vte{background:rgba(79,131,241,.07);color:var(--acc2);border-color:rgba(79,131,241,.2)}
+
+/* API preview */
+.api-preview{margin-top:80px;display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bo2);border:1px solid var(--bo2);border-radius:18px;overflow:hidden}
+.api-col{background:var(--bg1);padding:0}
+.api-bar{padding:13px 20px;background:var(--bg2);border-bottom:1px solid var(--bo);font-family:var(--m);font-size:11px;color:var(--mu);display:flex;align-items:center;gap:8px}
+.api-bar-dot{width:8px;height:8px;border-radius:50%}
+.api-code{font-family:var(--m);font-size:12px;line-height:2;padding:20px 24px;background:rgba(0,0,0,.2)}
+[data-theme="light"] .api-code{background:rgba(0,0,0,.03)}
+.cl2{display:flex;gap:0;padding:0 0;min-height:20px}
+.ln2{display:inline-block;width:24px;color:rgba(255,255,255,.1);text-align:right;margin-right:16px;user-select:none;font-size:10px;flex-shrink:0;padding-top:1px}
+[data-theme="light"] .ln2{color:rgba(0,0,0,.12)}
+.k{color:#c792ea}.s{color:#8ecf7f}.n2{color:#7ec8f5}.o{color:#89ddff}
+.c2{color:rgba(232,232,232,.25)}.nm{color:#f78c6c}.fn{color:#82aaff}
+.t2{color:#ffcb6b}.p{color:var(--tx2)}.sg{color:var(--key)}.sb{color:var(--acc2)}
+
+/* ── ECOSYSTEM ── */
+.eco-g{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
+.eco-c{
+  background:var(--bg1);border:1px solid var(--bo);border-radius:14px;
+  padding:28px 24px;text-decoration:none;color:inherit;
+  display:flex;flex-direction:column;gap:12px;transition:all .25s;
+}
+.eco-c:hover{border-color:var(--bo2);background:var(--bg2);transform:translateY(-2px)}
+.eco-ico{width:40px;height:40px;border-radius:10px;display:grid;place-items:center}
+.eco-ico svg{width:17px;height:17px}
+.eco-pill{
+  font-family:var(--m);font-size:9.5px;font-weight:500;padding:2px 9px;
+  border-radius:5px;width:fit-content;letter-spacing:.03em;border:1px solid;
+}
+.eco-name{font-family:var(--fd);font-size:17px;font-weight:700;letter-spacing:-.03em}
+.eco-sub{font-size:12px;color:var(--mu);margin-bottom:4px;font-family:var(--m)}
+.eco-d{font-size:13px;color:var(--mu);line-height:1.65}
+.eco-link{font-family:var(--m);font-size:11px;font-weight:500;margin-top:auto;display:flex;align-items:center;gap:5px}
+
+/* ── WHY ── */
+.why-split{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bo2);border:1px solid var(--bo2);border-radius:18px;overflow:hidden;margin-top:52px}
+.wc{background:var(--bg1);padding:40px 36px}
+.wc-h{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.wc-ico{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;flex-shrink:0}
+.wc-ico svg{width:16px;height:16px}
+.wc-t{font-family:var(--fd);font-size:16px;font-weight:700;letter-spacing:-.02em}
+.wc-s{font-size:12px;color:var(--mu);margin-top:2px}
+.wi2{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:12px 14px;border-radius:9px;border:1px solid var(--bo);background:var(--ca);
+  margin-bottom:8px;transition:background .2s;
+}
+.wi2:hover{background:var(--bg3)}
+.wi2 svg{width:14px;height:14px;flex-shrink:0;margin-top:1px}
+.wi2-t{font-size:13px;color:var(--tx2);font-weight:500;letter-spacing:-.01em}
+.wi2-s{font-size:11.5px;color:var(--mu);margin-top:2px}
+
+/* ── CTA ── */
+.cta-sec{
+  padding:140px 0;text-align:center;position:relative;z-index:2;overflow:hidden;
+}
+.cta-glow{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:900px;height:500px;pointer-events:none;
+  background:radial-gradient(ellipse,rgba(16,232,152,.05),transparent 60%);
+}
+.cta-in{position:relative;z-index:1;max-width:600px;margin:0 auto}
+.cta-in h2{
+  font-family:var(--fd);
+  font-size:clamp(2.4rem,5vw,4.2rem);font-weight:800;
+  letter-spacing:-.05em;line-height:.98;margin-bottom:18px
+}
+.grad-key{color:var(--key);text-shadow:0 0 60px rgba(16,232,152,.3)}
+.cta-in p{color:var(--mu);font-size:1rem;margin-bottom:48px;line-height:1.8}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+.btnA{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:13px 28px;border-radius:9px;
+  background:var(--key);color:#000;
+  font-size:14px;font-weight:700;text-decoration:none;letter-spacing:-.01em;
+  font-family:var(--fd);
+  transition:all .3s var(--ease2);
+  box-shadow:0 0 40px rgba(16,232,152,.2);
+}
+.btnA:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(16,232,152,.35)}
+.btnA svg{width:14px;height:14px}
+
+.btnB{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:12px 24px;border-radius:9px;border:1px solid var(--bo2);
+  background:var(--ca);color:var(--tx2);backdrop-filter:blur(8px);
+  font-size:14px;font-weight:500;text-decoration:none;letter-spacing:-.01em;
+  transition:all .25s;
+}
+.btnB:hover{background:var(--bg3);border-color:var(--bo3);color:var(--tx)}
+
+/* ── LOGOS STRIP ── */
+.trust{padding:64px 0;position:relative;z-index:2;overflow:hidden}
+.trust-lbl{text-align:center;font-family:var(--m);font-size:10px;color:var(--di);letter-spacing:.1em;text-transform:uppercase;font-weight:500;margin-bottom:28px}
+.logos-track{display:flex;gap:36px;animation:scroll-logos 30s linear infinite;width:max-content}
+.logos-track:hover{animation-play-state:paused}
+.logo-item{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 18px;background:var(--bg1);border:1px solid var(--bo);
+  border-radius:8px;font-size:12px;font-weight:500;color:var(--mu);
+  white-space:nowrap;transition:all .2s;flex-shrink:0;font-family:var(--m);
+}
+.logo-item:hover{color:var(--tx);border-color:var(--bo2)}
+.logo-item svg{width:13px;height:13px;flex-shrink:0}
+@keyframes scroll-logos{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.logos-fade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,var(--bg) 0%,transparent 12%,transparent 88%,var(--bg) 100%)}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--bo);padding:36px 0;position:relative;z-index:2}
+.fi3{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px}
+.fl4{display:flex;align-items:center;gap:14px}
+.fc{font-family:var(--m);font-size:11px;color:var(--di)}
+.flinks{display:flex;gap:24px}
+.flinks a{font-family:var(--m);font-size:11px;color:var(--mu);text-decoration:none;transition:color .2s}
+.flinks a:hover{color:var(--tx)}
+
+.cu{display:inline-block}
+
+@media(max-width:960px){
+  .kg-hero-body{grid-template-columns:1fr}
+  .kg-div{display:none}
+  .ben-g{grid-template-columns:1fr 1fr}
+  .flow-steps{grid-template-columns:1fr 1fr}
+  .flow-step::after{display:none}
+  .api-preview{grid-template-columns:1fr}
+  .eco-g{grid-template-columns:1fr 1fr}
+  .why-split{grid-template-columns:1fr}
+  .hstats{flex-wrap:wrap;border-radius:10px}
+  .hst{border-right:none;border-bottom:1px solid var(--bo);flex:1 1 120px}
+  .nlinks{display:none}
+}
+@media(max-width:640px){
+  h1,.h1-sub{font-size:3rem}
+  .ben-g{grid-template-columns:1fr}
+  .eco-g{grid-template-columns:1fr}
+  .flow-steps{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+<div class="gbg"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nL">
+    <a href="#" class="logo">
+      <div class="lic">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      </div>
+      <span class="lnm">llmhut</span><span class="lv">&nbsp;v0.1</span>
+    </a>
+    <div class="nlinks">
+      <a href="#keygate" class="nl">KeyGate</a>
+      <a href="#ecosystem" class="nl">Ecosystem</a>
+      <a href="#why" class="nl">Why</a>
+      <a href="https://aakashbhardwaj27.github.io/keygate/" target="_blank" class="nl">Docs</a>
+    </div>
+  </div>
+  <div class="nR">
+    <button class="tbtn" id="tb" aria-label="Toggle theme">
+      <svg class="imoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="isun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <a href="https://github.com/llmhut" target="_blank" class="ghb">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+      GitHub <span class="ghstar">★ 142</span>
+    </a>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div class="h-pill">
+    <span class="pdot"></span>
+    Open Source · MIT &amp; Apache 2.0 · Built in India
+  </div>
+  <div class="hero-eyebrow">Flagship product</div>
+  <h1>Stop sharing one key</h1>
+  <div class="h1-sub">with your entire team.</div>
+  <p class="hsub">
+    <strong>KeyGate</strong> provisions real, scoped vendor API keys per developer — with budget caps, instant revocation, and an immutable audit trail. No proxy. No latency. No shared secrets.
+  </p>
+
+  <!-- KEYGATE LIVE PREVIEW -->
+  <div class="kg-hero">
+    <div class="kg-hero-bar">
+      <div class="kg-hero-dots"><span class="kd kdr"></span><span class="kd kdy"></span><span class="kd kdg"></span></div>
+      <div class="kg-hero-label">KeyGate — key provisioning</div>
+      <div class="kg-live"><span class="kg-live-dot"></span>live api</div>
+    </div>
+    <div class="kg-hero-body">
+      <!-- Request column -->
+      <div class="kg-col">
+        <div class="kg-col-label">POST /api/v1/keys/provision</div>
+        <div class="kg-form-row">
+          <div class="kg-field">
+            <span class="kg-field-label">developer_id</span>
+            <span class="kg-field-val">"priya@team"</span>
+          </div>
+          <div class="kg-field">
+            <span class="kg-field-label">vendor</span>
+            <span class="kg-field-val hi">"openai"</span>
+          </div>
+          <div class="kg-field">
+            <span class="kg-field-label">budget_limit_usd</span>
+            <span class="kg-field-val">100</span>
+          </div>
+          <div class="kg-field">
+            <span class="kg-field-label">rate_limit_rpm</span>
+            <span class="kg-field-val">120</span>
+          </div>
+          <div class="kg-field">
+            <span class="kg-field-label">models_allowed</span>
+            <span class="kg-field-val" style="font-size:10.5px">["gpt-4", "gpt-4o"]</span>
+          </div>
+          <div class="kg-field">
+            <span class="kg-field-label">expires_in_days</span>
+            <span class="kg-field-val">90</span>
+          </div>
+          <button class="kg-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Provision Key
+          </button>
+        </div>
+      </div>
+      <div class="kg-div"></div>
+      <!-- Response column -->
+      <div class="kg-col">
+        <div class="kg-col-label">201 Created — response</div>
+        <div class="kg-resp">
+          <div class="kr-line"><span class="kr-key">key_id</span><span class="kr-val b">"key-xyz789"</span></div>
+          <div class="kr-line"><span class="kr-key">vendor</span><span class="kr-val">"openai"</span></div>
+          <div class="kr-line"><span class="kr-key">budget_limit</span><span class="kr-val">$100 USD</span></div>
+          <div class="kr-line"><span class="kr-key">rate_limit</span><span class="kr-val">120 RPM</span></div>
+          <div class="kr-line"><span class="kr-key">project_name</span><span class="kr-val" style="font-size:10.5px">"keygate-ml-priya-a3f2"</span></div>
+          <div class="kr-line"><span class="kr-key">expires_at</span><span class="kr-val" style="font-size:10.5px">2026-06-22T08:00:00Z</span></div>
+          <div class="kr-line"><span class="kr-key">base_url</span><span class="kr-val" style="font-size:10.5px">api.openai.com/v1</span></div>
+        </div>
+        <div class="kg-resp-key">sk-proj-...7xKm <span style="color:var(--mu);font-size:10px">← real OpenAI key</span></div>
+        <div class="kg-resp-note">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Key shown once. Never stored in full. Immutable audit logged.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- stats -->
+  <div class="hstats">
+    <div class="hst"><div class="hsv" style="color:var(--key)">0ms</div><div class="hsl">Added Latency</div></div>
+    <div class="hst"><div class="hsv" style="color:var(--acc2)">4</div><div class="hsl">Vendors</div></div>
+    <div class="hst"><div class="hsv" style="color:#fbbf24">100%</div><div class="hsl">Audit Coverage</div></div>
+    <div class="hst"><div class="hsv" style="color:var(--key)">1 cmd</div><div class="hsl">Docker Deploy</div></div>
+    <div class="hst"><div class="hsv" style="color:var(--gw)">∞</div><div class="hsl">Developers</div></div>
+  </div>
+</section>
+
+<!-- ══ TRUST STRIP ══ -->
+<div class="div"></div>
+<div class="trust">
+  <div class="trust-lbl">Real keys issued directly from vendor APIs</div>
+  <div style="position:relative;overflow:hidden">
+    <div class="logos-track">
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073z"/></svg>OpenAI</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg>Anthropic</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>Azure OpenAI</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/></svg>Google Vertex</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>LangChain</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Vercel AI SDK</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>Claude Code</div>
+      <!-- dupe for loop -->
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073z"/></svg>OpenAI</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg>Anthropic</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>Azure OpenAI</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/></svg>Google Vertex</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>LangChain</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Vercel AI SDK</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>Claude Code</div>
+    </div>
+    <div class="logos-fade"></div>
+  </div>
+</div>
+
+<!-- ══ KEYGATE FLAGSHIP SECTION ══ -->
+<div class="div"></div>
+<section class="flagship" id="keygate">
+  <div class="flagship-glow"></div>
+  <div class="flagship-inner">
+
+    <!-- header -->
+    <div class="r" style="max-width:620px">
+      <div class="etag"><span class="etag-dot"></span>KeyGate — Flagship</div>
+      <h2 class="stit">Real keys. Real isolation.<br/>Zero proxy overhead.</h2>
+      <p class="sdsc">Most "key management" tools are proxies in disguise. KeyGate uses vendor Admin APIs to create genuine scoped projects and issue actual <code style="font-family:var(--m);font-size:13px;color:var(--key)">sk-proj-...</code> keys per developer. Your traffic goes straight to the vendor — KeyGate never touches a request.</p>
+    </div>
+
+    <!-- 6-benefit grid -->
+    <div class="ben-g r d1">
+      <div class="ben-c">
+        <div class="ben-ico" style="background:rgba(16,232,152,.08);border:1px solid rgba(16,232,152,.15)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--key)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="ben-n">Real vendor keys</div>
+        <div class="ben-d">Not proxy tokens. Developers use authentic <code style="font-family:var(--m);font-size:11.5px">sk-proj-...</code> keys that work directly with any SDK, no changes needed.</div>
+        <span class="ben-tag" style="background:rgba(16,232,152,.07);color:var(--key);border:1px solid rgba(16,232,152,.18)">0ms overhead</span>
+      </div>
+      <div class="ben-c">
+        <div class="ben-ico" style="background:rgba(79,131,241,.08);border:1px solid rgba(79,131,241,.15)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--acc2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="ben-n">Per-developer isolation</div>
+        <div class="ben-d">Each key lives in its own vendor project or workspace, perfectly isolated. Revoke one dev without affecting anyone else.</div>
+        <span class="ben-tag" style="background:rgba(79,131,241,.07);color:var(--acc2);border:1px solid rgba(79,131,241,.18)">Vendor-native isolation</span>
+      </div>
+      <div class="ben-c">
+        <div class="ben-ico" style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.15)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="ben-n">Budget caps that stick</div>
+        <div class="ben-d">Spend limits enforced at the vendor level — not just alerts, not estimates. A $50 cap means the key stops at $50, guaranteed.</div>
+        <span class="ben-tag" style="background:rgba(251,191,36,.07);color:#fbbf24;border:1px solid rgba(251,191,36,.18)">Vendor-enforced</span>
+      </div>
+      <div class="ben-c">
+        <div class="ben-ico" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 7 13.5 15.5 8.5 10.5 1 17"/><polyline points="17 7 23 7 23 13"/></svg>
+        </div>
+        <div class="ben-n">Rate limiting</div>
+        <div class="ben-d">Per-key RPM limits enforced by the vendor. Protect your shared org quotas from runaway scripts and rogue jobs.</div>
+        <span class="ben-tag" style="background:rgba(239,68,68,.07);color:#f87171;border:1px solid rgba(239,68,68,.18)">Per-key RPM</span>
+      </div>
+      <div class="ben-c">
+        <div class="ben-ico" style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.15)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--gw)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2h-19A1.5 1.5 0 0 0 1 3.5v17A1.5 1.5 0 0 0 2.5 22h19a1.5 1.5 0 0 0 1.5-1.5v-17A1.5 1.5 0 0 0 21.5 2z"/><polyline points="8 7 8 17"/><polyline points="16 7 16 17"/><line x1="1" y1="12" x2="23" y2="12"/></svg>
+        </div>
+        <div class="ben-n">Immutable audit log</div>
+        <div class="ben-d">Every provision, revoke, rotate, and config change is permanently logged with actor, timestamp, and key hint. CISO-ready from day one.</div>
+        <span class="ben-tag" style="background:rgba(167,139,250,.07);color:var(--gw);border:1px solid rgba(167,139,250,.18)">Append-only log</span>
+      </div>
+      <div class="ben-c">
+        <div class="ben-ico" style="background:rgba(16,232,152,.08);border:1px solid rgba(16,232,152,.15)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--key)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        </div>
+        <div class="ben-n">Instant revocation</div>
+        <div class="ben-d">One API call. The key is deleted at the vendor level before the response returns. Developer offboarded, key dead — simultaneously.</div>
+        <span class="ben-tag" style="background:rgba(16,232,152,.07);color:var(--key);border:1px solid rgba(16,232,152,.18)">Vendor-level delete</span>
+      </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="flow r d2">
+      <div class="etag"><span class="etag-dot"></span>How it works</div>
+      <h3 class="stit" style="font-size:clamp(1.6rem,2.8vw,2.4rem)">Zero added latency by design.</h3>
+      <p class="sdsc" style="max-width:500px">KeyGate is only in the loop at key lifecycle time. Inference traffic goes straight to the vendor — KeyGate never sees a prompt.</p>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-n">Step 01</div>
+          <div class="flow-ico2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--key)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          </div>
+          <div class="flow-t">Admin provisions</div>
+          <div class="flow-d">Admin selects developer + vendor in the dashboard and clicks Provision.</div>
+          <div class="flow-hl">POST /api/v1/keys/provision</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-n">Step 02</div>
+          <div class="flow-ico2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--acc2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="flow-t">KeyGate calls vendor API</div>
+          <div class="flow-d">Creates a scoped project and service account. Stores only the key hint — never the full value.</div>
+          <div class="flow-hl">POST /v1/organization/projects<br/>POST /projects/{"{id}"}/service_accounts</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-n">Step 03</div>
+          <div class="flow-ico2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </div>
+          <div class="flow-t">Key delivered once</div>
+          <div class="flow-d">The real key is returned exactly once. Admin shares it via your preferred secure channel.</div>
+          <div class="flow-hl">sk-proj-...7xKm ← shown once only</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-n">Step 04</div>
+          <div class="flow-ico2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--key)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <div class="flow-t">Developer calls vendor directly</div>
+          <div class="flow-d">Traffic goes straight to OpenAI / Anthropic / Gemini. KeyGate is never in the request path.</div>
+          <div class="flow-hl">openai.api_key = "sk-proj-..."<br/>// 0ms overhead, no proxy</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VENDOR TABLE -->
+    <div class="vtbl r d3">
+      <div class="etag"><span class="etag-dot"></span>Supported Vendors</div>
+      <div style="overflow:hidden;border-radius:14px;border:1px solid var(--bo2)">
+        <table class="vt" style="border:none;border-radius:0">
+          <thead>
+            <tr>
+              <th>Vendor</th>
+              <th>Mechanism</th>
+              <th>Key format</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="vt-name">OpenAI</span></td>
+              <td style="color:var(--mu);font-size:12.5px">Project + Service Account per developer</td>
+              <td><span class="vt-key">sk-proj-...</span></td>
+              <td><span class="vt-badge vts">Supported</span></td>
+            </tr>
+            <tr>
+              <td><span class="vt-name">Anthropic</span></td>
+              <td style="color:var(--mu);font-size:12.5px">Workspace + API Key per developer</td>
+              <td><span class="vt-key">sk-ant-...</span></td>
+              <td><span class="vt-badge vts">Supported</span></td>
+            </tr>
+            <tr>
+              <td><span class="vt-name">Azure OpenAI</span></td>
+              <td style="color:var(--mu);font-size:12.5px">Cognitive Services resource per developer</td>
+              <td><span class="vt-key">endpoint + Key1</span></td>
+              <td><span class="vt-badge vts">Supported</span></td>
+            </tr>
+            <tr>
+              <td><span class="vt-name">Google Vertex</span></td>
+              <td style="color:var(--mu);font-size:12.5px">Service Account + IAM binding per developer</td>
+              <td><span class="vt-key">JSON credentials</span></td>
+              <td><span class="vt-badge vts">Supported</span></td>
+            </tr>
+            <tr>
+              <td><span class="vt-name">Custom vendor</span></td>
+              <td style="color:var(--mu);font-size:12.5px">Implement BaseVendorProvisioner class</td>
+              <td><span class="vt-key" style="color:var(--acc2);background:rgba(79,131,241,.07);border-color:rgba(79,131,241,.2)">any format</span></td>
+              <td><span class="vt-badge vte">Extensible</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- API PREVIEW -->
+    <div class="api-preview r d2" style="margin-top:80px">
+      <div class="api-col">
+        <div class="api-bar">
+          <span class="api-bar-dot" style="background:var(--key)"></span>
+          provision a key
+        </div>
+        <div class="api-code">
+          <div class="cl2"><span class="ln2">1</span><span class="c2">// POST /api/v1/keys/provision</span></div>
+          <div class="cl2"><span class="ln2">2</span><span class="k">const</span><span class="p"> res </span><span class="o">=</span><span class="k"> await</span><span class="fn"> fetch</span><span class="p">(</span><span class="s">'/api/v1/keys/provision'</span><span class="p">,{</span></div>
+          <div class="cl2"><span class="ln2">3</span><span class="p">  method: </span><span class="s">'POST'</span><span class="p">,</span></div>
+          <div class="cl2"><span class="ln2">4</span><span class="p">  headers: { </span><span class="s">'Authorization'</span><span class="p">: </span><span class="s">`Bearer ${"{token}"}`</span><span class="p"> },</span></div>
+          <div class="cl2"><span class="ln2">5</span><span class="p">  body: </span><span class="fn">JSON</span><span class="p">.</span><span class="fn">stringify</span><span class="p">({</span></div>
+          <div class="cl2"><span class="ln2">6</span><span class="p">    developer_id:     </span><span class="s">'dev-abc123'</span><span class="p">,</span></div>
+          <div class="cl2"><span class="ln2">7</span><span class="p">    vendor:           </span><span class="s">'openai'</span><span class="p">,</span></div>
+          <div class="cl2"><span class="ln2">8</span><span class="p">    budget_limit_usd: </span><span class="nm">100</span><span class="p">,</span></div>
+          <div class="cl2"><span class="ln2">9</span><span class="p">    rate_limit_rpm:   </span><span class="nm">120</span><span class="p">,</span></div>
+          <div class="cl2"><span class="ln2">10</span><span class="p">    expires_in_days:  </span><span class="nm">90</span><span class="p">,</span></div>
+          <div class="cl2"><span class="ln2">11</span><span class="p">    models_allowed:   [</span><span class="s">'gpt-4'</span><span class="p">,</span><span class="s">'gpt-4o'</span><span class="p">]</span></div>
+          <div class="cl2"><span class="ln2">12</span><span class="p">  })</span></div>
+          <div class="cl2"><span class="ln2">13</span><span class="p">})</span></div>
+          <div class="cl2"><span class="ln2">14</span></div>
+          <div class="cl2"><span class="ln2">15</span><span class="k">const</span><span class="p"> { api_key } </span><span class="o">=</span><span class="k"> await</span><span class="p"> res.</span><span class="fn">json</span><span class="p">()</span></div>
+          <div class="cl2"><span class="ln2">16</span><span class="c2">// → "sk-proj-...7xKm"  (real key, shown once)</span></div>
+        </div>
+      </div>
+      <div class="api-col">
+        <div class="api-bar">
+          <span class="api-bar-dot" style="background:#f87171"></span>
+          instant revoke
+        </div>
+        <div class="api-code">
+          <div class="cl2"><span class="ln2">1</span><span class="c2">// POST /api/v1/keys/{"{key_id}"}/revoke</span></div>
+          <div class="cl2"><span class="ln2">2</span><span class="k">await</span><span class="fn"> fetch</span><span class="p">(</span><span class="s">`/api/v1/keys/${"{keyId}"}/revoke`</span><span class="p">, {</span></div>
+          <div class="cl2"><span class="ln2">3</span><span class="p">  method: </span><span class="s">'POST'</span><span class="p">,</span></div>
+          <div class="cl2"><span class="ln2">4</span><span class="p">  headers: { </span><span class="s">'Authorization'</span><span class="p">: </span><span class="s">`Bearer ${"{token}"}`</span><span class="p"> }</span></div>
+          <div class="cl2"><span class="ln2">5</span><span class="p">})</span></div>
+          <div class="cl2"><span class="ln2">6</span><span class="c2">// Key deleted at vendor level. Immediate.</span></div>
+          <div class="cl2"><span class="ln2">7</span></div>
+          <div class="cl2"><span class="ln2">8</span><span class="c2">// Or offboard an entire developer:</span></div>
+          <div class="cl2"><span class="ln2">9</span><span class="k">await</span><span class="fn"> fetch</span><span class="p">(</span><span class="s">`/api/v1/developers/${"{devId}"}`</span><span class="p">, {</span></div>
+          <div class="cl2"><span class="ln2">10</span><span class="p">  method: </span><span class="s">'DELETE'</span><span class="p">,</span></div>
+          <div class="cl2"><span class="ln2">11</span><span class="p">  headers: { </span><span class="s">'Authorization'</span><span class="p">: </span><span class="s">`Bearer ${"{token}"}`</span><span class="p"> }</span></div>
+          <div class="cl2"><span class="ln2">12</span><span class="p">})</span></div>
+          <div class="cl2"><span class="ln2">13</span><span class="c2">// Deactivates developer + revokes ALL their keys.</span></div>
+          <div class="cl2"><span class="ln2">14</span><span class="c2">// Simultaneously. At vendor level.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Docker deploy -->
+    <div class="r d3" style="margin-top:32px;padding:20px 24px;background:var(--bg1);border:1px solid var(--bo);border-radius:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+      <div style="font-family:var(--m);font-size:12.5px;color:var(--tx2)">
+        <span style="color:var(--mu)">$</span> docker run -p 8000:8000 <span style="color:var(--key)">ghcr.io/llmhut/keygate</span>
+        <span style="color:var(--di);margin-left:16px"># full stack running in 30 seconds</span>
+      </div>
+      <a href="https://aakashbhardwaj27.github.io/keygate/" target="_blank" class="btnA" style="font-size:13px;padding:10px 20px">
+        Read the docs
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══ ECOSYSTEM ══ -->
+<div class="div"></div>
+<section class="sec" id="ecosystem">
+  <div class="wrap">
+    <div class="r" style="max-width:560px">
+      <div class="etag"><span class="etag-dot" style="background:var(--acc2)"></span>Ecosystem</div>
+      <h2 class="stit">The full AI infrastructure stack.</h2>
+      <p class="sdsc">KeyGate is the flagship, but llmhut covers the whole lifecycle — from detecting what AI is in your codebase to routing it intelligently at runtime.</p>
+    </div>
+    <div class="eco-g">
+      <a class="eco-c r d1" href="https://github.com/llmhut/keygate" target="_blank">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="eco-ico" style="background:rgba(16,232,152,.08);border:1px solid rgba(16,232,152,.15)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--key)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <span class="eco-pill" style="background:rgba(16,232,152,.07);color:var(--key);border-color:rgba(16,232,152,.2)">Flagship</span>
+        </div>
+        <div class="eco-name">KeyGate</div>
+        <div class="eco-sub">JS · REST API · Docker</div>
+        <div class="eco-d">Per-developer real vendor API keys. Budget caps, instant revocation, immutable audit trail. No proxy, zero latency.</div>
+        <div class="eco-link" style="color:var(--key)">github.com/llmhut/keygate <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+      </a>
+      <a class="eco-c r d2" href="https://github.com/llmhut/ai-scanner-mcp" target="_blank">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="eco-ico" style="background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.15)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--scan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <span class="eco-pill" style="background:rgba(249,115,22,.07);color:var(--scan);border-color:rgba(249,115,22,.2)">CLI · MCP Server</span>
+        </div>
+        <div class="eco-name">ai-scanner</div>
+        <div class="eco-sub">JS · CLI · MCP</div>
+        <div class="eco-d">Detect every AI SDK, framework, and exposed token in any codebase. Runs in CI, as a pre-commit hook, or as an MCP server in your IDE.</div>
+        <div class="eco-link" style="color:var(--scan)">github.com/llmhut/ai-scanner <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+      </a>
+      <a class="eco-c r d3" href="https://github.com/llmhut/gateway" target="_blank">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="eco-ico" style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.15)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--gw)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <span class="eco-pill" style="background:rgba(167,139,250,.07);color:var(--gw);border-color:rgba(167,139,250,.2)">Go · Docker</span>
+        </div>
+        <div class="eco-name">gateway</div>
+        <div class="eco-sub">Go · Gateway · OpenAI-compatible</div>
+        <div class="eco-d">Drop-in LLM router. Point your existing SDK at localhost:8080. Automatic fallback, load balancing, &lt;1ms overhead. No app changes.</div>
+        <div class="eco-link" style="color:var(--gw)">github.com/llmhut/gateway <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ WHY ══ -->
+<div class="div"></div>
+<section class="sec" id="why">
+  <div class="wrap">
+    <div class="r" style="max-width:540px">
+      <div class="etag"><span class="etag-dot"></span>Why KeyGate</div>
+      <h2 class="stit">The "shared key" problem<br/>is a security debt.</h2>
+      <p class="sdsc">You wouldn't give your whole team one SSH key. One shared <code style="font-family:var(--m);font-size:13px">OPENAI_API_KEY</code> means one fired developer away from a very bad day.</p>
+    </div>
+    <div class="why-split">
+      <div class="wc r">
+        <div class="wc-h">
+          <div class="wc-ico" style="background:rgba(239,68,68,.08)"><svg viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>
+          <div><div class="wc-t">Without KeyGate</div><div class="wc-s" style="font-family:var(--m);font-size:11px">how most teams operate</div></div>
+        </div>
+        <div class="wi2"><svg viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><div><div class="wi2-t">One key in Slack or Notion</div><div class="wi2-s">Shared across 50+ people, zero attribution</div></div></div>
+        <div class="wi2"><svg viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><div><div class="wi2-t">Can't revoke one person</div><div class="wi2-s">Rotate the key → break everyone's tooling</div></div></div>
+        <div class="wi2"><svg viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><div><div class="wi2-t">No per-developer budgets</div><div class="wi2-s">One runaway script burns the entire org quota</div></div></div>
+        <div class="wi2"><svg viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><div><div class="wi2-t">Keys committed to git</div><div class="wi2-s">GitHub secrets scanner finds it 3 days later</div></div></div>
+        <div class="wi2"><svg viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><div><div class="wi2-t">Zero audit trail</div><div class="wi2-s">No idea who used what, when, or how much</div></div></div>
+      </div>
+      <div class="wc r d2">
+        <div class="wc-h">
+          <div class="wc-ico" style="background:rgba(16,232,152,.08)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--key)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+          <div><div class="wc-t">With KeyGate</div><div class="wc-s" style="font-family:var(--m);font-size:11px">infrastructure that scales</div></div>
+        </div>
+        <div class="wi2"><svg viewBox="0 0 24 24" fill="none" stroke="var(--key)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><div><div class="wi2-t">Real key per developer</div><div class="wi2-s">sk-proj-... issued directly from the vendor</div></div></div>
+        <div class="wi2"><svg viewBox="0 0 24 24" fill="none" stroke="var(--key)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><div><div class="wi2-t">One-call revocation</div><div class="wi2-s">Vendor deletes the key before the response returns</div></div></div>
+        <div class="wi2"><svg viewBox="0 0 24 24" fill="none" stroke="var(--key)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><div><div class="wi2-t">Vendor-enforced budgets</div><div class="wi2-s">$100 cap means $100 — not $100 alert then more</div></div></div>
+        <div class="wi2"><svg viewBox="0 0 24 24" fill="none" stroke="var(--key)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><div><div class="wi2-t">No proxy, no latency</div><div class="wi2-s">KeyGate is never in the inference request path</div></div></div>
+        <div class="wi2"><svg viewBox="0 0 24 24" fill="none" stroke="var(--key)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><div><div class="wi2-t">Full immutable audit log</div><div class="wi2-s">Every action logged with actor, key, and timestamp</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA ══ -->
+<div class="div"></div>
+<section class="cta-sec">
+  <div class="cta-glow"></div>
+  <div class="cta-in r">
+    <div class="etag" style="justify-content:center;margin-bottom:20px"><span class="etag-dot"></span>Get started</div>
+    <h2>Ship AI with real<br/><span class="grad-key">key security.</span></h2>
+    <p>Apache 2.0 · Self-hosted · No account required<br/>One Docker command, full stack running in 30 seconds.</p>
+    <div class="cta-btns">
+      <a href="https://aakashbhardwaj27.github.io/keygate/" target="_blank" class="btnA">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        KeyGate docs
+      </a>
+      <a href="https://github.com/llmhut/keygate" target="_blank" class="btnB">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        View on GitHub
+      </a>
+      <a href="https://github.com/llmhut" target="_blank" class="btnB">Browse all tools</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="fi3">
+      <div class="fl4">
+        <a href="#" class="logo">
+          <div class="lic" style="width:24px;height:24px;border-radius:6px">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          </div>
+          <span class="lnm" style="font-size:13px">llmhut</span>
+        </a>
+        <span class="fc">Apache 2.0 · Open AI infrastructure · Built in India</span>
+      </div>
+      <div class="flinks">
+        <a href="https://github.com/llmhut">GitHub</a>
+        <a href="https://github.com/llmhut/keygate">KeyGate</a>
+        <a href="https://github.com/llmhut/ai-scanner-mcp">ai-scanner</a>
+        <a href="https://github.com/llmhut/gateway">gateway</a>
+        <a href="https://aakashbhardwaj27.github.io/keygate/">Docs</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  const html=document.documentElement,btn=document.getElementById('tb'),K='lh-theme';
+  function set(t){html.setAttribute('data-theme',t);localStorage.setItem(K,t);}
+  set(localStorage.getItem(K)||(matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'));
+  btn.addEventListener('click',()=>set(html.dataset.theme==='dark'?'light':'dark'));
+})();
+
+const ro=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in');});
+},{threshold:.07,rootMargin:'0px 0px -36px 0px'});
+document.querySelectorAll('.r').forEach(el=>ro.observe(el));
+</script>
+</body>
+</html>

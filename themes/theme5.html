@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>llmhut — Open AI Infrastructure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --or:#f97316; --or2:#fb923c; --gr:#22c55e; --bl:#3b82f6;
+  --pu:#a855f7; --re:#ef4444; --ye:#eab308; --cy:#06b6d4;
+  --f:'Inter',system-ui,sans-serif;
+  --m:'JetBrains Mono','Fira Code',monospace;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+
+[data-theme="dark"]{
+  --bg:#080808; --bg1:#0e0e0e; --bg2:#141414; --bg3:#1a1a1a; --bg4:#222;
+  --bo:rgba(255,255,255,.07); --bo2:rgba(255,255,255,.11); --bo3:rgba(255,255,255,.17);
+  --tx:#f0f0f0; --tx2:rgba(240,240,240,.72); --mu:rgba(240,240,240,.44);
+  --di:rgba(240,240,240,.22); --na:rgba(8,8,8,.82);
+  --ca:rgba(255,255,255,.03); --sh:rgba(255,255,255,.035);
+  --cb:#0a0a0a; --gl:rgba(249,115,22,.09); --gr2:rgba(255,255,255,.022);
+  --sd:0 0 0 1px rgba(255,255,255,.05),0 40px 100px rgba(0,0,0,.7);
+}
+[data-theme="light"]{
+  --bg:#f8f8f8; --bg1:#f2f2f2; --bg2:#fff; --bg3:#f5f5f5; --bg4:#ececec;
+  --bo:rgba(0,0,0,.07); --bo2:rgba(0,0,0,.11); --bo3:rgba(0,0,0,.17);
+  --tx:#111; --tx2:rgba(17,17,17,.72); --mu:rgba(17,17,17,.44);
+  --di:rgba(17,17,17,.24); --na:rgba(248,248,248,.88);
+  --ca:rgba(0,0,0,.018); --sh:rgba(255,255,255,.7);
+  --cb:#1a1a1a; --gl:rgba(249,115,22,.07); --gr2:rgba(0,0,0,.03);
+  --sd:0 0 0 1px rgba(0,0,0,.07),0 20px 60px rgba(0,0,0,.1);
+}
+
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--tx);
+  font-family:var(--f);font-size:15px;line-height:1.6;
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  transition:background .35s var(--ease),color .35s var(--ease);
+}
+
+/* ── GRID BG ── */
+.gbg{
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(var(--gr2) 1px,transparent 1px),linear-gradient(90deg,var(--gr2) 1px,transparent 1px);
+  background-size:52px 52px;
+  mask-image:radial-gradient(ellipse 90% 60% at 50% 0%,black,transparent 75%);
+  -webkit-mask-image:radial-gradient(ellipse 90% 60% at 50% 0%,black,transparent 75%);
+}
+
+/* ── ORBS ── */
+.orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);animation:odrift ease-in-out infinite}
+.o1{width:700px;height:700px;background:radial-gradient(circle,rgba(249,115,22,.07),transparent 70%);top:-200px;left:-100px;animation-duration:22s}
+.o2{width:500px;height:500px;background:radial-gradient(circle,rgba(59,130,246,.05),transparent 70%);top:40%;right:-150px;animation-duration:28s;animation-delay:-8s}
+.o3{width:400px;height:400px;background:radial-gradient(circle,rgba(168,85,247,.04),transparent 70%);bottom:15%;left:25%;animation-duration:20s;animation-delay:-14s}
+@keyframes odrift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-40px) scale(1.06)}66%{transform:translate(-20px,25px) scale(.95)}}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:900;height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(16px,3vw,40px);
+  background:var(--na);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--bo);
+  animation:navIn .6s var(--ease) both;
+  transition:background .35s,border-color .35s;
+}
+@keyframes navIn{from{opacity:0;transform:translateY(-100%)}to{opacity:1;transform:translateY(0)}}
+
+.nL{display:flex;align-items:center;gap:32px}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--tx)}
+.lic{
+  width:28px;height:28px;border-radius:7px;
+  background:linear-gradient(145deg,#f97316,#c2440c);
+  display:grid;place-items:center;position:relative;overflow:hidden;flex-shrink:0;
+  box-shadow:0 2px 10px rgba(249,115,22,.4);
+}
+.lic::after{content:'';position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,255,255,.25),transparent 55%)}
+.lic svg{position:relative;z-index:1}
+.lnm{font-family:var(--m);font-size:14px;font-weight:600;letter-spacing:-.01em}
+.lv{color:var(--mu);font-weight:400}
+
+.nlinks{display:flex;gap:2px}
+.nl{
+  padding:5px 12px;font-size:13px;font-weight:500;
+  color:var(--mu);text-decoration:none;border-radius:6px;transition:all .2s;
+}
+.nl:hover{color:var(--tx);background:var(--ca)}
+.nl-flag{color:var(--or);font-weight:600}
+.nl-flag:hover{color:var(--or);background:rgba(249,115,22,.08)}
+
+.nR{display:flex;align-items:center;gap:8px}
+.tbtn{
+  width:34px;height:34px;border-radius:7px;border:1px solid var(--bo2);
+  background:var(--ca);cursor:pointer;display:grid;place-items:center;
+  color:var(--mu);transition:all .2s;
+}
+.tbtn:hover{color:var(--tx);background:var(--bg4)}
+.tbtn svg{width:14px;height:14px}
+.isun{display:none}.imoon{display:block}
+[data-theme="light"] .isun{display:block}[data-theme="light"] .imoon{display:none}
+
+.ghb{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 16px;border-radius:7px;
+  background:var(--tx);color:var(--bg);
+  font-size:13px;font-weight:600;text-decoration:none;
+  transition:all .2s;position:relative;overflow:hidden;
+}
+.ghb::before{content:'';position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,255,255,.15),transparent)}
+.ghb:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(249,115,22,.2)}
+.ghstar{font-size:10.5px;opacity:.6;font-family:var(--m)}
+
+/* ── HERO ── */
+.hero{
+  position:relative;z-index:2;
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+  padding:110px 24px 80px;overflow:hidden;
+}
+
+.h-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:5px 16px 5px 8px;border:1px solid var(--bo2);border-radius:40px;
+  font-family:var(--m);font-size:11px;color:var(--mu);
+  background:var(--ca);margin-bottom:36px;
+  opacity:0;animation:fup .7s .2s var(--ease) forwards;
+  backdrop-filter:blur(8px);
+}
+.pdot{
+  width:22px;height:22px;border-radius:50%;
+  background:rgba(249,115,22,.12);display:grid;place-items:center;
+}
+.pdot::after{
+  content:'';width:7px;height:7px;border-radius:50%;
+  background:var(--or);animation:pdp 2.5s ease-in-out infinite;
+}
+@keyframes pdp{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+
+@keyframes fup{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+h1{
+  font-size:clamp(2.8rem,6vw,5.8rem);font-weight:800;
+  letter-spacing:-.055em;line-height:.96;margin-bottom:28px;
+  opacity:0;animation:hIn 1s .32s var(--ease) forwards;
+}
+@keyframes hIn{from{opacity:0;transform:translateY(40px) scale(.97);filter:blur(10px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+
+.hgr{
+  background:linear-gradient(105deg,var(--or) 0%,#f59e0b 42%,var(--or2) 80%,#fde68a 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  background-size:200% auto;animation:gsh 4s linear infinite;
+}
+@keyframes gsh{0%{background-position:0% center}100%{background-position:200% center}}
+
+.hsub{
+  font-size:clamp(1rem,1.6vw,1.15rem);color:var(--mu);
+  line-height:1.75;max-width:540px;margin:0 auto 48px;letter-spacing:-.01em;
+  opacity:0;animation:fup .8s .5s var(--ease) forwards;
+}
+.hsub strong{color:var(--tx2);font-weight:600}
+
+.hctas{
+  display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:56px;
+  opacity:0;animation:fup .8s .62s var(--ease) forwards;
+}
+.btnA{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:12px 24px;border-radius:8px;
+  background:var(--tx);color:var(--bg);
+  font-size:14px;font-weight:700;text-decoration:none;letter-spacing:-.01em;
+  transition:all .3s var(--ease);position:relative;overflow:hidden;
+}
+.btnA::before{content:'';position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,255,255,.18),transparent)}
+.btnA:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(249,115,22,.22)}
+.btnB{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:12px 24px;border-radius:8px;border:1px solid var(--bo2);
+  background:var(--ca);color:var(--tx2);backdrop-filter:blur(8px);
+  font-size:14px;font-weight:500;text-decoration:none;letter-spacing:-.01em;
+  transition:all .25s;
+}
+.btnB:hover{background:var(--bg3);border-color:var(--bo3)}
+
+/* ── STATS ROW ── */
+.hstats{
+  display:flex;align-items:center;gap:0;
+  border:1px solid var(--bo2);border-radius:12px;overflow:hidden;
+  background:var(--ca);backdrop-filter:blur(10px);
+  opacity:0;animation:fup .8s .74s var(--ease) forwards;
+}
+.hst{
+  padding:20px 32px;text-align:center;border-right:1px solid var(--bo);
+  transition:background .2s;cursor:default;
+}
+.hst:last-child{border-right:none}
+.hst:hover{background:rgba(255,255,255,.03)}
+[data-theme="light"] .hst:hover{background:rgba(0,0,0,.03)}
+.hsv{font-family:var(--m);font-size:26px;font-weight:700;letter-spacing:-.04em;line-height:1;margin-bottom:5px}
+.hsl{font-size:11px;color:var(--mu);letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+
+/* ═══════════════════════════════════════════════ */
+/* ── FLAGSHIP SECTION (KeyGate) ──               */
+/* ═══════════════════════════════════════════════ */
+.flagship{
+  position:relative;z-index:2;
+  padding:100px 0 80px;
+  overflow:hidden;
+}
+.flagship::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:1200px;height:600px;pointer-events:none;
+  background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(59,130,246,.06),transparent 70%);
+}
+.flag-inner{max-width:1200px;margin:0 auto;padding:0 clamp(20px,4vw,52px)}
+
+.flag-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:5px 14px 5px 8px;border-radius:40px;
+  background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);
+  font-family:var(--m);font-size:11px;font-weight:600;
+  color:#60a5fa;letter-spacing:.02em;margin-bottom:20px;
+}
+.flag-badge-dot{
+  width:20px;height:20px;border-radius:50%;
+  background:rgba(59,130,246,.15);display:grid;place-items:center;
+}
+.flag-badge-dot::after{
+  content:'';width:6px;height:6px;border-radius:50%;
+  background:#60a5fa;animation:pdp 2.5s ease-in-out infinite;
+}
+
+.flag-grid{
+  display:grid;grid-template-columns:1fr 1.15fr;gap:64px;align-items:center;
+}
+
+.flag-title{
+  font-size:clamp(2.2rem,4vw,3.4rem);font-weight:800;
+  letter-spacing:-.05em;line-height:1.02;margin-bottom:18px;
+}
+.flag-title .bl-gr{
+  background:linear-gradient(105deg,#60a5fa 0%,#3b82f6 40%,#818cf8 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.flag-desc{
+  font-size:1rem;color:var(--mu);line-height:1.75;max-width:480px;margin-bottom:28px;
+}
+
+.flag-features{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.ff-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:14px 16px;border-radius:10px;
+  border:1px solid var(--bo);background:var(--ca);
+  transition:all .25s;
+}
+.ff-item:hover{background:var(--bg3);border-color:var(--bo2);transform:translateX(4px)}
+.ff-ico{
+  flex-shrink:0;width:28px;height:28px;border-radius:7px;
+  background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.15);
+  display:grid;place-items:center;margin-top:1px;
+}
+.ff-ico svg{width:13px;height:13px}
+.ff-t{font-size:13.5px;font-weight:600;color:var(--tx2);letter-spacing:-.01em}
+.ff-s{font-size:12px;color:var(--mu);margin-top:2px;line-height:1.55}
+
+.flag-ctas{display:flex;gap:10px;flex-wrap:wrap}
+.flag-btnA{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:12px 24px;border-radius:8px;
+  background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;
+  font-size:14px;font-weight:700;text-decoration:none;letter-spacing:-.01em;
+  transition:all .3s var(--ease);position:relative;overflow:hidden;
+  box-shadow:0 4px 20px rgba(59,130,246,.3);
+}
+.flag-btnA::before{content:'';position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,255,255,.18),transparent)}
+.flag-btnA:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(59,130,246,.4)}
+
+/* flagship card (bigger, special border) */
+.flag-card{
+  background:var(--bg1);
+  border:1px solid rgba(59,130,246,.15);
+  border-radius:18px;overflow:hidden;
+  box-shadow:var(--sd),0 0 80px rgba(59,130,246,.04);
+  transition:border-color .35s,box-shadow .35s;
+}
+.flag-card:hover{border-color:rgba(59,130,246,.25);box-shadow:var(--sd),0 0 120px rgba(59,130,246,.07)}
+
+.flag-card .fu-bar{
+  display:flex;align-items:center;gap:8px;padding:11px 16px;
+  background:var(--bg2);border-bottom:1px solid var(--bo);position:relative;
+}
+.fu-title{font-family:var(--m);font-size:11px;color:var(--di);position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap}
+
+/* KEYGATE card content */
+.kg-body{padding:20px}
+.kg-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.kg-title{font-size:14px;font-weight:700;letter-spacing:-.02em}
+.kg-badge{font-family:var(--m);font-size:10px;padding:3px 10px;border-radius:5px;font-weight:600}
+.kg-row{display:grid;grid-template-columns:1fr auto auto;gap:14px;padding:12px 14px;background:var(--bg2);border-radius:8px;margin-bottom:6px;align-items:center;border:1px solid var(--bo);transition:background .2s}
+.kg-row:hover{background:var(--bg3)}
+.kg-dev{font-size:12px;font-weight:700;letter-spacing:-.01em}
+.kg-key{font-family:var(--m);font-size:10px;color:var(--di)}
+.kg-budget{font-family:var(--m);font-size:10.5px;font-weight:600}
+.kg-status{width:7px;height:7px;border-radius:50%}
+.kg-audit{margin-top:14px}
+.ka-lbl{font-size:11px;font-weight:600;color:var(--mu);margin-bottom:8px}
+.ka-line{display:block;font-family:var(--m);font-size:10.5px;color:var(--di);line-height:1.9}
+
+/* ── SHOWCASE ── */
+.sc{
+  position:relative;z-index:2;padding:100px 0;
+  overflow:hidden;
+}
+.sc-inner{max-width:1200px;margin:0 auto;padding:0 clamp(20px,4vw,52px)}
+.sc-head{text-align:center;margin-bottom:56px}
+
+.sc-tabs{
+  display:flex;justify-content:center;gap:4px;
+  background:var(--bg1);border:1px solid var(--bo2);
+  border-radius:12px;padding:5px;
+  width:fit-content;margin:0 auto 40px;
+}
+.sct{
+  display:flex;align-items:center;gap:7px;
+  padding:8px 18px;border-radius:8px;
+  font-size:13px;font-weight:500;color:var(--mu);
+  cursor:pointer;transition:all .25s;letter-spacing:-.01em;white-space:nowrap;
+}
+.sct:hover{color:var(--tx)}
+.sct.on{background:var(--bg2);color:var(--tx);box-shadow:var(--sd)}
+.sct svg{width:14px;height:14px;flex-shrink:0}
+.sct-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* showcase pane */
+.sc-pane{
+  background:var(--bg1);border:1px solid var(--bo2);border-radius:18px;overflow:hidden;
+  box-shadow:var(--sd);position:relative;
+  opacity:0;transform:translateY(24px);
+  transition:opacity .6s var(--ease),transform .6s var(--ease);
+}
+.sc-pane.vis{opacity:1;transform:translateY(0)}
+
+.sc-pane-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:13px 20px;background:var(--bg2);border-bottom:1px solid var(--bo);
+}
+.sc-pane-title{
+  font-family:var(--m);font-size:11.5px;color:var(--di);
+  position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;
+}
+.wdots{display:flex;gap:5px}
+.wd{width:11px;height:11px;border-radius:50%}
+.wdr{background:#ff5f57}.wdy{background:#febc2e}.wdg{background:#28c840}
+
+.sp-body{display:grid;grid-template-columns:200px 1fr;min-height:420px}
+.sp-sidebar{
+  background:rgba(255,255,255,.015);border-right:1px solid var(--bo);
+  padding:16px 0;
+}
+[data-theme="light"] .sp-sidebar{background:rgba(0,0,0,.02)}
+.sp-sl{
+  font-family:var(--m);font-size:9.5px;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--di);padding:0 16px 10px;font-weight:700;
+}
+.sp-si{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 16px;font-size:12px;color:var(--mu);
+  transition:all .2s;cursor:default;border-left:2px solid transparent;
+}
+.sp-si:hover{color:var(--tx2);background:rgba(255,255,255,.03)}
+[data-theme="light"] .sp-si:hover{background:rgba(0,0,0,.03)}
+.sp-si.on{color:var(--tx2);background:rgba(249,115,22,.06);border-left-color:var(--or)}
+.sp-si-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+.sp-main{display:flex;flex-direction:column}
+.sp-tabs2{display:flex;border-bottom:1px solid var(--bo);background:var(--bg2)}
+.sp-tab2{
+  padding:8px 18px;font-family:var(--m);font-size:11.5px;
+  color:var(--mu);border-right:1px solid var(--bo);
+  display:flex;align-items:center;gap:6px;transition:all .2s;
+  cursor:pointer;
+}
+.sp-tab2:hover{color:var(--tx2);background:var(--ca)}
+.sp-tab2.on{color:var(--tx2);background:var(--bg1);border-bottom:1.5px solid var(--or);margin-bottom:-1px}
+.sp-tab2-dot{width:5px;height:5px;border-radius:50%}
+
+.sp-code{font-family:var(--m);font-size:12.5px;line-height:1.9;background:var(--cb);flex:1;overflow:auto}
+.cl{display:flex;padding:0 20px;min-height:22px;transition:background .15s}
+.cl:hover{background:rgba(255,255,255,.025)}
+[data-theme="light"] .cl:hover{background:rgba(0,0,0,.02)}
+.cl.lh{background:rgba(249,115,22,.07)}
+.ln{display:inline-block;width:28px;color:rgba(255,255,255,.12);text-align:right;margin-right:20px;user-select:none;font-size:11px;flex-shrink:0}
+[data-theme="light"] .ln{color:rgba(234, 234, 234, 0.15)}
+/* syntax */
+.k{color:#c792ea}.s{color:#c3e88d}.n{color:#82aaff}.o{color:#89ddff}
+.c{color:rgba(232,232,232,.24)}.nm{color:#f78c6c}.fn{color:#82aaff}
+.t{color:#ffcb6b}.p{color:var(--tx2)}
+.sg{color:#22c55e}.sb{color:#60a5fa}.so{color:#f97316}.sr{color:#ef4444}.sm{color:var(--mu)}
+
+/* terminal output panel */
+.sp-term{
+  background:var(--cb);border-top:1px solid var(--bo);
+  font-family:var(--m);font-size:12px;line-height:2;padding:14px 20px;
+}
+.tl{display:block}.tbl{display:block;height:7px}
+
+/* ── SECTION SHARED ── */
+.sec{position:relative;z-index:2;padding:96px 0}
+.wrap{max-width:1160px;margin:0 auto;padding:0 clamp(20px,4vw,52px)}
+.div{height:1px;background:var(--bo);position:relative;z-index:2}
+
+.etag{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:var(--m);font-size:11px;font-weight:600;
+  color:var(--or);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;
+}
+.etag::before{content:'';display:block;width:14px;height:2px;background:var(--or);border-radius:2px}
+
+.stit{font-size:clamp(2rem,3.5vw,3rem);font-weight:800;letter-spacing:-.045em;line-height:1.06;margin-bottom:16px}
+.sdsc{font-size:.97rem;color:var(--mu);line-height:1.75;letter-spacing:-.01em}
+
+/* scroll reveal */
+.r{opacity:0;transform:translateY(36px);transition:opacity .85s var(--ease),transform .85s var(--ease)}
+.r.in{opacity:1;transform:translateY(0)}
+.d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}.d4{transition-delay:.32s}.d5{transition-delay:.4s}
+
+/* ── FEATURES ALTERNATING ── */
+.feat-row{
+  display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;
+  padding:72px 0;border-bottom:1px solid var(--bo);
+}
+.feat-row:last-of-type{border-bottom:none}
+.feat-row.fl{direction:rtl}
+.feat-row.fl>*{direction:ltr}
+
+.fi-wrap{display:flex;flex-direction:column;gap:18px}
+.fi-tag{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:var(--m);font-size:10.5px;font-weight:600;
+  padding:4px 12px;border-radius:6px;width:fit-content;letter-spacing:.03em;
+}
+.tor2{background:rgba(249,115,22,.09);color:var(--or);border:1px solid rgba(249,115,22,.2)}
+.tgr2{background:rgba(34,197,94,.07);color:#22c55e;border:1px solid rgba(34,197,94,.18)}
+.tbl2{background:rgba(96,165,250,.07);color:#60a5fa;border:1px solid rgba(96,165,250,.18)}
+.tpu2{background:rgba(168,85,247,.07);color:#a855f7;border:1px solid rgba(168,85,247,.18)}
+
+.fi-name{font-size:clamp(1.5rem,2.5vw,2.1rem);font-weight:800;letter-spacing:-.04em;line-height:1.1}
+.fi-desc{font-size:.95rem;color:var(--mu);line-height:1.75;max-width:420px}
+
+.fi-pts{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.fpt{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:11px 14px;border-radius:8px;border:1px solid var(--bo);background:var(--ca);
+  transition:background .2s;
+}
+.fpt:hover{background:var(--bg3)}
+.fpt-ico{flex-shrink:0;margin-top:2px}
+.fpt-ico svg{width:13px;height:13px}
+.fpt-t{font-size:13px;color:var(--tx2);letter-spacing:-.01em;font-weight:500}
+.fpt-s{font-size:11.5px;color:var(--mu);margin-top:2px}
+
+.fi-link{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--m);font-size:12.5px;font-weight:600;
+  text-decoration:none;padding:9px 18px;border-radius:7px;
+  border:1px solid var(--bo2);background:var(--ca);width:fit-content;
+  transition:all .22s;
+}
+.fi-link:hover{transform:translateX(3px);background:var(--bg3)}
+.fi-link svg{transition:transform .22s}
+.fi-link:hover svg{transform:translateX(2px)}
+.lor3{color:var(--or)}.lgr3{color:#22c55e}.lbl3{color:#60a5fa}.lpu3{color:#a855f7}
+
+/* feature UI card */
+.fu-card{
+  background:var(--bg1);border:1px solid var(--bo2);border-radius:16px;
+  overflow:hidden;box-shadow:var(--sd);
+  transition:border-color .35s,background .35s;
+}
+.fu-bar{
+  display:flex;align-items:center;gap:8px;padding:11px 16px;
+  background:var(--bg2);border-bottom:1px solid var(--bo);position:relative;
+}
+
+/* GATEWAY dashboard card */
+.gw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px}
+.gw-card{background:var(--bg2);border:1px solid var(--bo);border-radius:10px;padding:14px;transition:background .2s}
+.gw-card:hover{background:var(--bg3)}
+.gwl{font-family:var(--m);font-size:10px;color:var(--di);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;font-weight:600}
+.gwv{font-size:22px;font-weight:800;letter-spacing:-.04em}
+.gwv.gg{color:#22c55e}.gwv.gb{color:#60a5fa}.gwv.go{color:var(--or)}
+.gwsub{font-family:var(--m);font-size:10px;margin-top:4px}
+.gwup{color:#22c55e}.gwdn{color:#ef4444}
+.gw-wide{
+  grid-column:1/-1;background:var(--bg2);border:1px solid var(--bo);
+  border-radius:10px;padding:14px;transition:background .2s;
+}
+.gw-wide:hover{background:var(--bg3)}
+.spkl{width:100%;height:50px;margin-top:10px;overflow:visible}
+.spkl path{stroke-dasharray:600;stroke-dashoffset:600;animation:drawl 2.5s ease forwards .5s}
+@keyframes drawl{to{stroke-dashoffset:0}}
+
+/* ROADMAP */
+.rmtbl{border:1px solid var(--bo2);border-radius:14px;overflow:hidden;background:var(--bg2);margin-top:52px}
+.rm-hr{display:grid;grid-template-columns:1.8fr 3fr 1fr;padding:10px 22px;background:var(--bg3);border-bottom:1px solid var(--bo);font-family:var(--m);font-size:10px;color:var(--di);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.rm-r{display:grid;grid-template-columns:1.8fr 3fr 1fr;padding:14px 22px;border-bottom:1px solid var(--bo);align-items:center;font-size:13px;transition:background .2s}
+.rm-r:last-child{border-bottom:none}
+.rm-r:hover{background:var(--bg3)}
+.rm-n{font-weight:700;color:var(--tx2);font-family:var(--m);font-size:12.5px;letter-spacing:-.01em}
+.rm-d{color:var(--mu);font-size:12px}
+.rmbg{font-family:var(--m);font-size:10px;padding:3px 10px;border-radius:5px;font-weight:600;width:fit-content}
+.rbs{background:rgba(168,85,247,.1);color:#a855f7;border:1px solid rgba(168,85,247,.2)}
+.rbp{background:var(--ca);color:var(--mu);border:1px solid var(--bo)}
+
+/* LOGOS */
+.trust{padding:60px 0;position:relative;z-index:2;overflow:hidden}
+.trust-lbl{text-align:center;font-size:12px;color:var(--di);letter-spacing:.08em;text-transform:uppercase;font-weight:600;font-family:var(--m);margin-bottom:28px}
+.logos-track{display:flex;gap:40px;animation:scroll-logos 28s linear infinite;width:max-content}
+.logos-track:hover{animation-play-state:paused}
+.logo-item{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 20px;background:var(--bg2);border:1px solid var(--bo);
+  border-radius:8px;font-size:12.5px;font-weight:600;color:var(--mu);
+  white-space:nowrap;transition:all .2s;flex-shrink:0;
+}
+.logo-item:hover{color:var(--tx);border-color:var(--bo2);background:var(--bg3)}
+.logo-item svg{width:14px;height:14px;flex-shrink:0}
+@keyframes scroll-logos{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.logos-fade{
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,var(--bg) 0%,transparent 12%,transparent 88%,var(--bg) 100%);
+}
+
+/* WHY compare */
+.why-g{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--bo2);border:1px solid var(--bo2);border-radius:16px;overflow:hidden;margin-top:52px}
+.wc{background:var(--bg2);padding:36px 32px}
+.wc-h{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.wc-ico{width:32px;height:32px;border-radius:7px;display:grid;place-items:center}
+.wc-ico svg{width:15px;height:15px}
+.wc-t{font-size:14px;font-weight:700;letter-spacing:-.02em}
+.wc-s{font-size:12px;color:var(--mu)}
+.w-items{display:flex;flex-direction:column;gap:9px}
+.wi2{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border-radius:8px;border:1px solid var(--bo);background:var(--ca);transition:background .2s}
+.wi2:hover{background:var(--bg3)}
+.wi2-ico{flex-shrink:0;margin-top:1px}
+.wi2-ico svg{width:13px;height:13px}
+.wi2-t{font-size:13px;color:var(--tx2);letter-spacing:-.01em;font-weight:500}
+.wi2-s{font-size:11.5px;color:var(--mu);margin-top:2px}
+
+/* COMMUNITY */
+.cc-g{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bo2);border:1px solid var(--bo2);border-radius:16px;overflow:hidden;margin-top:52px}
+.cc-c{background:var(--bg2);padding:32px 28px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:12px;transition:background .2s}
+.cc-c:hover{background:var(--bg3)}
+.cc-ico2{width:38px;height:38px;border-radius:9px;background:var(--ca);border:1px solid var(--bo2);display:grid;place-items:center}
+.cc-ico2 svg{width:17px;height:17px;color:var(--tx2)}
+.cc-n{font-size:14.5px;font-weight:700;letter-spacing:-.02em}
+.cc-d{font-size:13px;color:var(--mu);line-height:1.65;flex:1}
+.cc-l{font-family:var(--m);font-size:11px;color:var(--or);font-weight:600}
+
+/* CTA */
+.cta-sec{
+  padding:130px 0;text-align:center;position:relative;z-index:2;overflow:hidden;
+}
+.cta-glow{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:900px;height:600px;pointer-events:none;
+  background:radial-gradient(ellipse,var(--gl),transparent 65%);
+  animation:odrift 8s ease-in-out infinite;
+}
+.cta-in{position:relative;z-index:1;max-width:600px;margin:0 auto}
+.cta-in h2{font-size:clamp(2.4rem,5vw,4rem);font-weight:800;letter-spacing:-.055em;line-height:1.02;margin-bottom:18px}
+.grad2{background:linear-gradient(100deg,var(--or),#f59e0b 50%,var(--or2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.cta-in p{color:var(--mu);font-size:1rem;margin-bottom:44px;line-height:1.75}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* FOOTER */
+footer{border-top:1px solid var(--bo);padding:32px 0;position:relative;z-index:2;background:var(--bg);transition:background .35s,border-color .35s}
+.fi3{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px}
+.fl4{display:flex;align-items:center;gap:14px}
+.fc{font-family:var(--m);font-size:11px;color:var(--di)}
+.flinks{display:flex;gap:22px}
+.flinks a{font-family:var(--m);font-size:11px;color:var(--mu);text-decoration:none;transition:color .2s}
+.flinks a:hover{color:var(--tx)}
+
+.cu{display:inline-block}
+
+@media(max-width:1024px){
+  .sp-body{grid-template-columns:1fr}
+  .sp-sidebar{display:none}
+  .feat-row{grid-template-columns:1fr;gap:40px}
+  .feat-row.fl{direction:ltr}
+  .flag-grid{grid-template-columns:1fr;gap:40px}
+  .why-g{grid-template-columns:1fr}
+  .cc-g{grid-template-columns:1fr 1fr}
+  .nlinks{display:none}
+  .rm-d{display:none}
+  .rm-hr{grid-template-columns:1fr 1fr}
+  .rm-r{grid-template-columns:1fr 1fr}
+  .hstats{flex-wrap:wrap;border-radius:10px}
+  .hst{border-right:none;border-bottom:1px solid var(--bo);flex:1 1 120px}
+}
+@media(max-width:640px){
+  h1{font-size:2.6rem}
+  .hero{padding:100px 16px 60px}
+  .cc-g{grid-template-columns:1fr}
+  .gw-grid{grid-template-columns:1fr 1fr}
+  .sct-label{display:none}
+}
+</style>
+</head>
+<body>
+<div class="orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+<div class="gbg"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nL">
+    <a href="#" class="logo">
+      <div class="lic">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      </div>
+      <span class="lnm">llmhut<span class="lv"> v0.1</span></span>
+    </a>
+    <div class="nlinks">
+      <a href="#keygate" class="nl nl-flag">KeyGate</a>
+      <a href="#features" class="nl">Features</a>
+      <a href="#projects" class="nl">Projects</a>
+      <a href="#why" class="nl">Why</a>
+      <a href="#community" class="nl">Community</a>
+    </div>
+  </div>
+  <div class="nR">
+    <button class="tbtn" id="tb">
+      <svg class="imoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="isun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <a href="https://github.com/llmhut" target="_blank" class="ghb">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+      GitHub <span class="ghstar">★ 142</span>
+    </a>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div class="h-pill">
+    <span class="pdot"></span>
+    Open Source · MIT &amp; Apache 2.0 · Built in India
+  </div>
+
+  <h1>Open infrastructure<br/>for <span class="hgr">LLM builders.</span></h1>
+
+  <p class="hsub">
+    <strong>Discovery, access control, and runtime routing</strong> for AI-native systems.<br/>
+    Drop into any codebase in minutes. No rewrites. No shared keys.
+  </p>
+
+  <div class="hctas">
+    <a href="#keygate" class="btnA">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Try KeyGate — flagship project
+    </a>
+    <a href="https://github.com/llmhut" target="_blank" class="btnB">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+      We're open source
+    </a>
+    <a href="https://aakashbhardwaj27.github.io/keygate/" target="_blank" class="btnB">View the docs →</a>
+  </div>
+
+  <!-- stats row -->
+  <div class="hstats">
+    <div class="hst"><div class="hsv" style="color:var(--or)"><span class="cu" data-target="145">0</span>+</div><div class="hsl">Detection Patterns</div></div>
+    <div class="hst"><div class="hsv" style="color:#22c55e"><span class="cu" data-target="142">0</span>+</div><div class="hsl">GitHub Stars</div></div>
+    <div class="hst"><div class="hsv" style="color:#60a5fa"><span class="cu" data-target="23">0</span></div><div class="hsl">SDKs Covered</div></div>
+    <div class="hst"><div class="hsv" style="color:#a855f7">5</div><div class="hsl">LLM Providers</div></div>
+    <div class="hst"><div class="hsv" style="color:var(--or2)">&lt;1ms</div><div class="hsl">Gateway Overhead</div></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ══ FLAGSHIP: KEYGATE ══                                        -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="div"></div>
+<section class="flagship" id="keygate">
+  <div class="flag-inner">
+    <div class="flag-grid">
+      <!-- Left: copy -->
+      <div class="r">
+        <div class="flag-badge">
+          <span class="flag-badge-dot"></span>
+          Flagship Project
+        </div>
+        <h2 class="flag-title">Per-developer API keys.<br/><span class="bl-gr">Real ones.</span></h2>
+        <p class="flag-desc">Stop sharing one API key across your entire team. KeyGate provisions real vendor keys per developer, with budget caps, instant revocation, and an immutable audit log.</p>
+
+        <div class="flag-features">
+          <div class="ff-item">
+            <div class="ff-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <div><div class="ff-t">Real keys, not proxy tokens</div><div class="ff-s">sk-proj-... keys issued directly from OpenAI, Anthropic, Gemini</div></div>
+          </div>
+          <div class="ff-item">
+            <div class="ff-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div><div class="ff-t">Budget caps enforced at vendor level</div><div class="ff-s">Spend limits that actually stick — not just alerts after the bill</div></div>
+          </div>
+          <div class="ff-item">
+            <div class="ff-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <div><div class="ff-t">Instant revoke + immutable audit trail</div><div class="ff-s">One API call kills a key before damage spreads — every action logged</div></div>
+          </div>
+        </div>
+
+        <div class="flag-ctas">
+          <a href="https://github.com/llmhut/keygate" target="_blank" class="flag-btnA">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+            Get KeyGate
+          </a>
+          <a href="https://aakashbhardwaj27.github.io/keygate/" target="_blank" class="btnB">Read the docs →</a>
+        </div>
+      </div>
+
+      <!-- Right: dashboard card -->
+      <div class="r d2">
+        <div class="flag-card">
+          <div class="fu-bar">
+            <div class="wdots"><span class="wd wdr"></span><span class="wd wdy"></span><span class="wd wdg"></span></div>
+            <span class="fu-title">KeyGate — key dashboard</span>
+          </div>
+          <div class="kg-body">
+            <div class="kg-top">
+              <div class="kg-title">Active Keys</div>
+              <div class="kg-badge" style="background:rgba(34,197,94,.08);color:#22c55e;border:1px solid rgba(34,197,94,.18)">3 active</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="kg-row"><div><div class="kg-dev">priya@team</div><div class="kg-key">sk-proj-...7xKm · OpenAI</div></div><div class="kg-budget" style="color:var(--mu)">$42 / $100</div><div class="kg-status" style="background:#22c55e"></div></div>
+              <div class="kg-row"><div><div class="kg-dev">arun@team</div><div class="kg-key">sk-ant-...mN2p · Anthropic</div></div><div class="kg-budget" style="color:var(--mu)">$18 / $50</div><div class="kg-status" style="background:#22c55e"></div></div>
+              <div class="kg-row"><div><div class="kg-dev">maya@team</div><div class="kg-key">AIza...Qs9R · Gemini</div></div><div class="kg-budget" style="color:var(--or);font-weight:700">$97 / $100</div><div class="kg-status" style="background:var(--or)"></div></div>
+            </div>
+            <div class="kg-audit" style="margin-top:16px">
+              <div class="ka-lbl">Recent audit</div>
+              <span class="ka-line"><span style="color:#22c55e;font-weight:700">PROVISION</span> priya@team → openai sk-proj-...7xKm</span>
+              <span class="ka-line"><span style="color:#ef4444;font-weight:700">REVOKE</span> dev-bot → anthropic sk-ant-...xP4q</span>
+              <span class="ka-line"><span style="color:#60a5fa;font-weight:700">ROTATE</span> arun@team → anthropic sk-ant-...mN2p</span>
+            </div>
+            <!-- code snippet -->
+            <div style="margin-top:16px;background:var(--cb);border-radius:8px;border:1px solid var(--bo);overflow:hidden">
+              <div style="padding:4px 12px;border-bottom:1px solid var(--bo);font-family:var(--m);font-size:10px;color:var(--di)">keygate.ts</div>
+              <div style="padding:10px 14px;font-family:var(--m);font-size:11.5px;line-height:1.85">
+                <div><span class="k">const</span><span class="n"> key</span><span class="o"> =</span><span class="k"> await </span><span class="n"> kg</span><span class="n">.</span><span class="fn">provision</span><span class="n">({</span></div>
+                <div><span class="n">  developer:</span><span class="s"> 'priya@team'</span><span class="n">,</span></div>
+                <div><span class="n">  vendor:</span><span class="s"> 'openai'</span><span class="n">,</span></div>
+                <div><span class="n">  budget:</span><span class="nm"> 100</span></div>
+                <div><span class="n">})</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ LOGOS / TRUST ══ -->
+<div class="div"></div>
+<div class="trust">
+  <div class="trust-lbl">Works with every major AI provider</div>
+  <div style="position:relative;overflow:hidden">
+    <div class="logos-track" id="logosTrack">
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073z"/></svg>OpenAI</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg>Anthropic</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/></svg>Gemini</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Groq</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>Bedrock</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>LangChain</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>LlamaIndex</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Vercel AI SDK</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>Claude Code</div>
+      <!-- duplicate for loop -->
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073z"/></svg>OpenAI</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg>Anthropic</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/></svg>Gemini</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Groq</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>Bedrock</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>LangChain</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>LlamaIndex</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Vercel AI SDK</div>
+      <div class="logo-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>Claude Code</div>
+    </div>
+    <div class="logos-fade"></div>
+  </div>
+</div>
+
+<!-- ══ FEATURE SHOWCASE (other tools) ══ -->
+<div class="div"></div>
+<section class="sc" id="features">
+  <div class="sc-inner">
+    <div class="sc-head r">
+      <span class="etag">Platform</span>
+      <h2 class="stit">The rest of the stack.</h2>
+      <p class="sdsc" style="max-width:520px;margin:0 auto">Beyond KeyGate — discovery and routing tools that complete your AI infrastructure.</p>
+    </div>
+
+    <!-- tabs -->
+    <div class="sc-tabs r d1">
+      <div class="sct on" data-tab="scanner" onclick="scTab(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span class="sct-label">AI Scanner</span>
+      </div>
+      <div class="sct" data-tab="gateway" onclick="scTab(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span class="sct-label">Gateway</span>
+      </div>
+    </div>
+
+    <!-- SHOWCASE PANE -->
+    <div class="sc-pane r d2" id="scPane">
+      <div class="sc-pane-bar" style="position:relative">
+        <div class="wdots"><span class="wd wdr"></span><span class="wd wdy"></span><span class="wd wdg"></span></div>
+        <span class="sc-pane-title" id="scTitle">ai-scanner — scan results</span>
+      </div>
+      <div class="sp-body">
+        <!-- sidebar -->
+        <div class="sp-sidebar">
+          <div class="sp-sl">Explorer</div>
+          <div class="sp-si on" id="ss1"><span class="sp-si-dot" style="background:var(--or)"></span>ai-scanner.ts</div>
+          <div class="sp-si" id="ss2"><span class="sp-si-dot" style="background:#22c55e"></span>gateway.yaml</div>
+          <div class="sp-si" style="margin-top:16px"><span class="sp-si-dot" style="background:var(--di)"></span>package.json</div>
+          <div class="sp-si"><span class="sp-si-dot" style="background:var(--di)"></span>.github/ci.yml</div>
+          <div class="sp-si"><span class="sp-si-dot" style="background:var(--di)"></span>Dockerfile</div>
+        </div>
+        <!-- main -->
+        <div class="sp-main">
+          <div class="sp-tabs2">
+            <div class="sp-tab2 on" id="st1"><span class="sp-tab2-dot" style="background:var(--or)"></span><span id="st1lbl">ai-scanner.ts</span></div>
+            <div class="sp-tab2" id="st2" style="display:none"><span class="sp-tab2-dot" style="background:#22c55e"></span><span id="st2lbl">output</span></div>
+          </div>
+          <!-- code pane -->
+          <div id="codePane" class="sp-code">
+            <div id="cp-scanner">
+              <div class="cl"><span class="ln">1</span><span class="c">// detect every AI SDK, token, and framework in the codebase</span></div>
+              <div class="cl lh"><span class="ln">2</span><span class="k">import</span><span class="s"> { scan } </span><span class="k">from</span><span class="s"> 'ai-scanner'</span></div>
+              <div class="cl"><span class="ln">3</span></div>
+              <div class="cl"><span class="ln">4</span><span class="k">const</span><span class="n"> result</span><span class="o"> =</span><span class="k"> await </span><span class="fn"> scan</span><span class="k">({</span></div>
+              <div class="cl"><span class="ln">5</span><span class="k">  path:</span><span class="s"> './src'</span><span class="k">,</span></div>
+              <div class="cl"><span class="ln">6</span><span class="k">  checks: [</span><span class="s">'sdks'</span><span class="k">,</span><span class="s"> 'tokens'</span><span class="k">,</span><span class="s"> 'frameworks'</span><span class="k">],</span></div>
+              <div class="cl"><span class="ln">7</span><span class="k">  exitOnExposed:</span><span class="k"> true</span></div>
+              <div class="cl"><span class="ln">8</span><span class="k">})</span></div>
+              <div class="cl"><span class="ln">9</span></div>
+              <div class="cl"><span class="ln">10</span><span class="c">// result.sdks   → ['openai', '@anthropic-ai/sdk', 'langchain']</span></div>
+              <div class="cl"><span class="ln">11</span><span class="c">// result.exposed → [{ key: 'OPENAI_API_KEY', file: '.env.local' }]</span></div>
+              <div class="cl"><span class="ln">12</span></div>
+              <div class="cl lh"><span class="ln">13</span><span class="k">if</span><span class="s"> (result.exposed.length</span><span class="o"> &gt;</span><span class="nm"> 0</span><span class="s">) process.</span><span class="fn">exit</span><span class="s">(</span><span class="nm">1</span><span class="s">)</span><span class="c"> // ← fail CI</span></div>
+              <div class="cl"><span class="ln">14</span></div>
+              <div class="cl"><span class="ln">15</span><span class="c">// also runs as MCP server for Claude Code, Cursor, Windsurf</span></div>
+              <div class="cl"><span class="ln">16</span><span class="c">// npx ai-scanner serve --port 3333</span></div>
+            </div>
+            <div id="cp-gateway" style="display:none">
+              <div class="cl"><span class="ln">1</span><span class="c">// gateway.yaml — zero-dep LLM router, OpenAI-compatible</span></div>
+              <div class="cl lh"><span class="ln">2</span><span style="color:#60a5fa">providers</span><span class="sm">:</span></div>
+              <div class="cl lh"><span class="ln">3</span><span class="sm">  - </span><span style="color:#60a5fa">name</span><span class="sm">: </span><span style="color:#22c55e">openai</span></div>
+              <div class="cl"><span class="ln">4</span><span class="sm">    </span><span style="color:#60a5fa">key</span><span class="sm">:  </span><span class="sm">$OPENAI_KEY</span></div>
+              <div class="cl"><span class="ln">5</span><span class="sm">  - </span><span style="color:#60a5fa">name</span><span class="sm">: </span><span style="color:#22c55e">anthropic</span></div>
+              <div class="cl"><span class="ln">6</span><span class="sm">    </span><span style="color:#60a5fa">key</span><span class="sm">:  </span><span class="sm">$ANTHROPIC_KEY</span></div>
+              <div class="cl"><span class="ln">7</span><span class="sm">  - </span><span style="color:#60a5fa">name</span><span class="sm">: </span><span style="color:#22c55e">groq</span></div>
+              <div class="cl"><span class="ln">8</span><span class="sm">    </span><span style="color:#60a5fa">key</span><span class="sm">:  </span><span class="sm">$GROQ_KEY</span></div>
+              <div class="cl"><span class="ln">9</span></div>
+              <div class="cl lh"><span class="ln">10</span><span style="color:#60a5fa">routing</span><span class="sm">:</span></div>
+              <div class="cl lh"><span class="ln">11</span><span class="sm">  </span><span style="color:#60a5fa">strategy</span><span class="sm">: </span><span style="color:#eab308">fallback</span></div>
+              <div class="cl"><span class="ln">12</span><span class="sm">  </span><span style="color:#60a5fa">primary</span><span class="sm">:  </span><span style="color:#22c55e">openai</span></div>
+              <div class="cl"><span class="ln">13</span><span class="sm">  </span><span style="color:#60a5fa">fallback</span><span class="sm">: </span><span style="color:#22c55e">anthropic</span></div>
+              <div class="cl"><span class="ln">14</span></div>
+              <div class="cl lh"><span class="ln">15</span><span style="color:#60a5fa">listen</span><span class="sm">: </span><span style="color:#eab308">:8080</span><span class="sm"> # OpenAI-compatible — no app changes</span></div>
+            </div>
+          </div>
+          <!-- terminal pane -->
+          <div id="termPane" style="display:none" class="sp-term">
+            <span class="tl" id="tto0"><span class="sm">$</span> <span style="color:var(--tx2)">npx ai-scanner ./src --exit-code</span></span>
+            <span class="tl" id="tto1" style="opacity:0;transition:opacity .3s"><span class="sm">  scanning 847 files ···</span></span>
+            <span class="tl" id="tto2" style="opacity:0;transition:opacity .3s"><span class="sg">  ✓ openai · @anthropic-ai/sdk · langchain</span></span>
+            <span class="tl" id="tto3" style="opacity:0;transition:opacity .3s"><span class="sb">  ✓ 23 SDKs · 0 exposed keys · 2 frameworks</span></span>
+            <span class="tl" id="tto4" style="opacity:0;transition:opacity .3s"><span class="sg">  exit 0</span><span class="sm"> — clean, CI passed ✓</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FEATURE ROWS ══ -->
+<div class="div"></div>
+<section class="sec" id="projects">
+  <div class="wrap">
+
+    <!-- ai-scanner -->
+    <div class="feat-row r">
+      <div class="fi-wrap">
+        <span class="fi-tag tor2">JS · CLI · MCP Server</span>
+        <h3 class="fi-name">Know exactly what AI is running in your codebase.</h3>
+        <p class="fi-desc">Scan any project for LLM SDK usage, AI framework integrations, and exposed API tokens. Works as a CLI, a CI step, or an MCP server inside your IDE.</p>
+        <div class="fi-pts">
+          <div class="fpt"><div class="fpt-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="fpt-t">145 detection patterns across 23 SDKs</div><div class="fpt-s">OpenAI, Anthropic, LangChain, LlamaIndex, and more</div></div></div>
+          <div class="fpt"><div class="fpt-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="fpt-t">Exposed token detection with CI exit code</div><div class="fpt-s">Fails your build before a leaked key reaches git</div></div></div>
+          <div class="fpt"><div class="fpt-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="fpt-t">MCP server for Claude Code, Cursor, Windsurf</div><div class="fpt-s">Ask your IDE what AI is in your repo, live</div></div></div>
+        </div>
+        <a href="https://github.com/llmhut/ai-scanner-mcp" target="_blank" class="fi-link lor3">github.com/llmhut/ai-scanner <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      </div>
+      <div class="r d2">
+        <div class="fu-card">
+          <div class="fu-bar">
+            <div class="wdots"><span class="wd wdr"></span><span class="wd wdy"></span><span class="wd wdg"></span></div>
+            <span class="fu-title">$ npx ai-scanner ./my-project --verbose</span>
+          </div>
+          <div style="padding:18px 22px;font-family:var(--m);font-size:12px;line-height:1.95;background:var(--cb)">
+            <span class="tl"><span class="sm">  scanning</span> <span style="color:var(--tx2)">847 files</span> <span class="sm">in ./my-project</span></span>
+            <span class="tbl"></span>
+            <span class="tl"><span class="sb">  SDKs detected:</span></span>
+            <span class="tl"><span class="sg">    ✓ openai</span><span class="sm">              src/lib/ai.ts:3</span></span>
+            <span class="tl"><span class="sg">    ✓ @anthropic-ai/sdk</span><span class="sm">   src/chat.ts:1</span></span>
+            <span class="tl"><span class="sg">    ✓ @google/generative-ai</span><span class="sm"> src/gen.ts:2</span></span>
+            <span class="tbl"></span>
+            <span class="tl"><span class="sb">  Frameworks:</span></span>
+            <span class="tl"><span class="sg">    ✓ langchain</span><span class="sm">           src/chain.ts:1</span></span>
+            <span class="tl"><span class="sg">    ✓ llamaindex</span><span class="sm">          src/index.ts:5</span></span>
+            <span class="tbl"></span>
+            <span class="tl"><span class="sr">  ✗ OPENAI_API_KEY</span><span class="sm">     .env.local:4 — not gitignored!</span></span>
+            <span class="tbl"></span>
+            <span class="tl" style="color:var(--tx2)">  3 SDKs · 2 frameworks · <span class="sr">1 exposed key</span></span>
+            <span class="tl"><span class="sr">  exit 1</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- gateway -->
+    <div class="feat-row fl r">
+      <div class="fi-wrap">
+        <span class="fi-tag tgr2">Go · Gateway · Docker</span>
+        <h3 class="fi-name">Route LLM traffic without touching your app code.</h3>
+        <p class="fi-desc">A blazing-fast, zero-dependency LLM router in Go. Drop-in OpenAI-compatible API — your existing SDK just points to localhost:8080. Swap providers in config, not code.</p>
+        <div class="fi-pts">
+          <div class="fpt"><div class="fpt-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="fpt-t">&lt;1ms overhead, 0 dependencies</div><div class="fpt-s">Pure Go binary — ships as a single Docker image</div></div></div>
+          <div class="fpt"><div class="fpt-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="fpt-t">Automatic fallback + load balancing</div><div class="fpt-s">OpenAI down? Anthropic picks up transparently</div></div></div>
+          <div class="fpt"><div class="fpt-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="fpt-t">OpenAI, Anthropic, Gemini, Groq, Bedrock</div><div class="fpt-s">One gateway, five providers, same API shape</div></div></div>
+        </div>
+        <a href="https://github.com/llmhut/gateway" target="_blank" class="fi-link lgr3">github.com/llmhut/gateway <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      </div>
+      <div class="r d2">
+        <div class="fu-card">
+          <div class="fu-bar">
+            <div class="wdots"><span class="wd wdr"></span><span class="wd wdy"></span><span class="wd wdg"></span></div>
+            <span class="fu-title">gateway — live metrics</span>
+          </div>
+          <div class="gw-grid">
+            <div class="gw-card"><div class="gwl">Req / min</div><div class="gwv gg cu" data-target="12847">0</div><div class="gwsub gwup">↑ 24% vs yesterday</div></div>
+            <div class="gw-card"><div class="gwl">Avg latency</div><div class="gwv gb">0.4ms</div><div class="gwsub gwup">↓ 12% improved</div></div>
+            <div class="gw-card"><div class="gwl">Providers</div><div class="gwv go cu" data-target="4">0</div><div class="gwsub" style="color:var(--mu)">OAI · Ant · Gem · Groq</div></div>
+            <div class="gw-wide"><div class="gwl">Throughput — 24h</div>
+              <svg class="spkl" viewBox="0 0 400 50" fill="none">
+                <path d="M0,45 C30,43 50,30 80,25 C110,20 130,35 160,30 C190,25 210,10 240,15 C270,20 290,5 320,3 C350,1 370,8 400,2" stroke="#22c55e" stroke-width="2" fill="none"/>
+                <path d="M0,45 C30,43 50,30 80,25 C110,20 130,35 160,30 C190,25 210,10 240,15 C270,20 290,5 320,3 C350,1 370,8 400,2 L400,50 L0,50Z" fill="url(#spkg)" opacity=".25"/>
+                <defs><linearGradient id="spkg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#22c55e"/><stop offset="100%" stop-color="transparent"/></linearGradient></defs>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- roadmap -->
+    <div class="rmtbl r">
+      <div class="rm-hr"><span>Roadmap</span><span>Description</span><span>Status</span></div>
+      <div class="rm-r"><span class="rm-n">llm-obs</span><span class="rm-d">Request tracing, token dashboards, cost attribution per developer</span><span class="rmbg rbs">Coming soon</span></div>
+      <div class="rm-r"><span class="rm-n">eval-pipeline</span><span class="rm-d">Structured evals against prompts &amp; models — CI/CD native</span><span class="rmbg rbp">Planned</span></div>
+      <div class="rm-r"><span class="rm-n">deploy-prims</span><span class="rm-d">Minimal tooling for shipping LLM-backed services to production</span><span class="rmbg rbp">Planned</span></div>
+      <div class="rm-r"><span class="rm-n">event-system</span><span class="rm-d">Webhooks + streams for key lifecycle &amp; usage thresholds</span><span class="rmbg rbp">Planned</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══ WHY ══ -->
+<div class="div"></div>
+<section class="sec" id="why">
+  <div class="wrap">
+    <div class="r" style="max-width:560px;margin-bottom:0">
+      <span class="etag">Why llmhut</span>
+      <h2 class="stit">Stop duct-taping<br/>your AI ops.</h2>
+      <p class="sdsc">You wouldn't share one database password across your team. Why share one <code style="font-family:var(--m);font-size:13px">OPENAI_API_KEY</code>?</p>
+    </div>
+    <div class="why-g" style="margin-top:48px">
+      <div class="wc r">
+        <div class="wc-h"><div class="wc-ico" style="background:rgba(239,68,68,.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div><div><div class="wc-t">Without llmhut</div><div class="wc-s">how most teams operate</div></div></div>
+        <div class="w-items">
+          <div class="wi2"><div class="wi2-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div><div class="wi2-t">One shared key in Slack/Notion</div><div class="wi2-s">No attribution, no budget control</div></div></div>
+          <div class="wi2"><div class="wi2-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div><div class="wi2-t">No idea what SDKs are in prod</div><div class="wi2-s">Someone added LangChain 3 months ago</div></div></div>
+          <div class="wi2"><div class="wi2-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div><div class="wi2-t">Keys committed to git</div><div class="wi2-s">GitHub scan catches it 3 days later</div></div></div>
+          <div class="wi2"><div class="wi2-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div><div class="wi2-t">Switching providers = code rewrite</div><div class="wi2-s">Hard-coded SDK everywhere</div></div></div>
+        </div>
+      </div>
+      <div class="wc r d2">
+        <div class="wc-h"><div class="wc-ico" style="background:rgba(34,197,94,.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div><div class="wc-t">With llmhut</div><div class="wc-s">infrastructure that scales</div></div></div>
+        <div class="w-items">
+          <div class="wi2"><div class="wi2-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="wi2-t">Per-dev vendor keys with budget caps</div><div class="wi2-s">Real keys, vendor-enforced, instant revoke</div></div></div>
+          <div class="wi2"><div class="wi2-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="wi2-t">Full SDK &amp; framework audit in CI</div><div class="wi2-s">145 patterns, exit-code support, MCP server</div></div></div>
+          <div class="wi2"><div class="wi2-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="wi2-t">Token scanning in every PR</div><div class="wi2-s">Fails CI before a key ever reaches git</div></div></div>
+          <div class="wi2"><div class="wi2-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="wi2-t">Provider-agnostic gateway</div><div class="wi2-s">Change providers in config, not code</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ COMMUNITY ══ -->
+<div class="div"></div>
+<section class="sec" id="community">
+  <div class="wrap">
+    <div style="max-width:480px" class="r">
+      <span class="etag">Community</span>
+      <h2 class="stit">Open source.<br/>PRs welcome.</h2>
+      <p class="sdsc">Early-stage infrastructure. Your patterns, edge cases, and providers make it better for everyone.</p>
+    </div>
+    <div class="cc-g">
+      <a class="cc-c r d1" href="https://github.com/llmhut" target="_blank"><div class="cc-ico2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="cc-n">Star on GitHub</div><p class="cc-d">Help others find these tools. 142 stars and growing fast.</p><span class="cc-l">github.com/llmhut →</span></a>
+      <a class="cc-c r d2" href="https://github.com/llmhut/ai-scanner-mcp/issues" target="_blank"><div class="cc-ico2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="cc-n">File an issue</div><p class="cc-d">Missing SDK pattern, broken detection? Every report makes it sharper.</p><span class="cc-l">Open an issue →</span></a>
+      <a class="cc-c r d3" href="https://github.com/llmhut/gateway/pulls" target="_blank"><div class="cc-ico2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg></div><div class="cc-n">Contribute</div><p class="cc-d">New providers, SDK patterns, detection rules. CONTRIBUTING.md is short.</p><span class="cc-l">Submit a PR →</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA ══ -->
+<div class="div"></div>
+<section class="cta-sec">
+  <div class="cta-glow"></div>
+  <div class="cta-in r">
+    <span class="etag" style="justify-content:center;margin-bottom:20px">Get started</span>
+    <h2>Build on solid<br/><span class="grad2">AI infrastructure.</span></h2>
+    <p>MIT &amp; Apache 2.0. Self-hosted. No account needed.<br/>Built for developers who ship AI to production.</p>
+    <div class="cta-btns">
+      <a href="https://github.com/llmhut/keygate" target="_blank" class="flag-btnA">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Start with KeyGate
+      </a>
+      <a href="https://github.com/llmhut" target="_blank" class="btnB">Browse all repos</a>
+      <a href="https://aakashbhardwaj27.github.io/keygate/" target="_blank" class="btnB">KeyGate docs</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="fi3">
+      <div class="fl4">
+        <a href="#" class="logo"><div class="lic" style="width:22px;height:22px;border-radius:6px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></div><span class="lnm" style="font-size:12.5px">llmhut</span></a>
+        <span class="fc">MIT &amp; Apache 2.0 · Open AI infrastructure</span>
+      </div>
+      <div class="flinks">
+        <a href="https://github.com/llmhut">GitHub</a>
+        <a href="https://github.com/llmhut/keygate">KeyGate</a>
+        <a href="https://github.com/llmhut/ai-scanner-mcp">ai-scanner</a>
+        <a href="https://github.com/llmhut/gateway">gateway</a>
+        <a href="https://aakashbhardwaj27.github.io/keygate/">Docs</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── THEME ──
+(function(){
+  const html=document.documentElement,btn=document.getElementById('tb'),K='lh-theme';
+  function set(t){html.setAttribute('data-theme',t);localStorage.setItem(K,t);}
+  set(localStorage.getItem(K)||(matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'));
+  btn.addEventListener('click',()=>set(html.dataset.theme==='dark'?'light':'dark'));
+  matchMedia('(prefers-color-scheme:light)').addEventListener('change',e=>{if(!localStorage.getItem(K))set(e.matches?'light':'dark');});
+})();
+
+// ── SHOWCASE TABS (scanner + gateway only, keygate is flagship) ──
+const scData={
+  scanner:{title:'ai-scanner — scan results',s1:'ai-scanner.ts',s2:'output',t1:'ai-scanner.ts',code:'cp-scanner',
+    term:['<span class="sm">$</span> <span style="color:var(--tx2)">npx ai-scanner ./src --exit-code</span>','<span class="sm">  scanning 847 files ···</span>','<span class="sg">  ✓ openai · @anthropic-ai/sdk · langchain</span>','<span class="sb">  ✓ 23 SDKs · 0 exposed keys</span>','<span class="sg">  exit 0 — CI passed ✓</span>'],
+    ss:0},
+  gateway:{title:'gateway — config + metrics',s1:'gateway.yaml',s2:'metrics',t1:'gateway.yaml',code:'cp-gateway',
+    term:['<span class="sm">$</span> <span style="color:var(--tx2)">docker run -p 8080:8080 ghcr.io/llmhut/gateway</span>','<span class="sm">  loading providers ···</span>','<span class="sg">  ✓ openai registered</span>','<span class="sg">  ✓ anthropic registered (fallback)</span>','<span class="sb">  ready on :8080 — &lt;1ms</span>'],
+    ss:1}
+};
+
+function scTab(el){
+  const tab=el.dataset.tab;const d=scData[tab];
+  document.querySelectorAll('.sct').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('scTitle').textContent=d.title;
+  document.getElementById('st1lbl').textContent=d.s1;
+  document.getElementById('st2lbl').textContent=d.s2;
+  ['ss1','ss2'].forEach((id,i)=>{const e=document.getElementById(id);if(e)e.classList.toggle('on',i===d.ss);});
+  ['cp-scanner','cp-gateway'].forEach(id=>{document.getElementById(id).style.display=id===d.code?'':'none';});
+  document.getElementById('st1').classList.add('on');
+  document.getElementById('st2').classList.remove('on');
+  document.getElementById('codePane').style.display='';
+  document.getElementById('termPane').style.display='none';
+  const tp=document.getElementById('termPane');
+  tp.innerHTML=d.term.map((l,i)=>`<span class="tl"${i>0?' id="tto'+i+'" style="opacity:0;transition:opacity .3s"':''}>${l}</span>`).join('');
+}
+
+document.getElementById('st1').addEventListener('click',function(){
+  this.classList.add('on');document.getElementById('st2').classList.remove('on');
+  document.getElementById('codePane').style.display='';
+  document.getElementById('termPane').style.display='none';
+});
+document.getElementById('st2').addEventListener('click',function(){
+  this.classList.add('on');document.getElementById('st1').classList.remove('on');
+  document.getElementById('codePane').style.display='none';
+  document.getElementById('termPane').style.display='';
+  [1,2,3,4].forEach((n,i)=>{const e=document.getElementById('tto'+n);if(e)setTimeout(()=>e.style.opacity='1',300+i*320);});
+});
+
+// ── SCROLL REVEAL ──
+const ro=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');if(e.target.classList.contains('sc-pane'))e.target.classList.add('vis');}});},{threshold:.07,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.r,.sc-pane').forEach(el=>ro.observe(el));
+
+// ── COUNT UP ──
+const cu=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(!e.isIntersecting||e.target.dataset.done)return;
+    e.target.dataset.done='1';
+    const tg=+e.target.dataset.target;if(isNaN(tg))return;
+    const t0=performance.now(),dur=1600;
+    const tick=now=>{const p=Math.min((now-t0)/dur,1);e.target.textContent=Math.floor((1-Math.pow(1-p,3))*tg).toLocaleString();if(p<1)requestAnimationFrame(tick);};
+    requestAnimationFrame(tick);
+  });
+},{threshold:.5});
+document.querySelectorAll('.cu').forEach(el=>cu.observe(el));
+</script>
+</body>
+</html>
